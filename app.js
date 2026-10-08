@@ -12,6 +12,7 @@ const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173')
   .split(',')
   .map((origin) => origin.trim());
 
+console.log('Allowed CORS origins:', allowedOrigins);
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json({ limit: '1mb' }));
 
@@ -31,6 +32,7 @@ app.use((request, _response, next) => {
 });
 
 app.use((error, _request, response, _next) => {
+    console.error('Error:', error);
   if (error.name === 'ZodError') {
     return response.status(400).json({ error: 'Validation failed', details: error.issues });
   }
