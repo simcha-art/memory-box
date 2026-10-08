@@ -2,7 +2,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { AuthProvider } from './AuthContext';
+import { AuthProvider } from './features/auth/AuthContext';
 import { App } from './App';
 
 const fetchMock = vi.fn();
@@ -23,9 +23,24 @@ describe('MemoryBox client', () => {
     renderApp();
 
     expect(await screen.findByRole('heading', { name: /welcome back/i })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /create an account/i }));
+    fireEvent.click(screen.getByRole('link', { name: /create an account/i }));
     expect(screen.getByRole('heading', { name: /make room for less forgetting/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/your name/i)).toBeInTheDocument();
+  });
+
+  it('persists language, direction, and theme preferences', async () => {
+    vi.stubGlobal('fetch', fetchMock);
+    renderApp();
+
+    await screen.findByRole('heading', { name: /welcome back/i });
+    fireEvent.click(screen.getByRole('button', { name: /language/i }));
+    expect(document.documentElement.lang).toBe('he');
+    expect(document.documentElement.dir).toBe('rtl');
+    expect(localStorage.getItem('memorybox-locale')).toBe('he');
+
+    fireEvent.click(screen.getByRole('button', { name: /מעבר למצב כהה/i }));
+    expect(document.documentElement.dataset.theme).toBe('dark');
+    expect(localStorage.getItem('memorybox-theme')).toBe('dark');
   });
 
   it('opens the new-item form from the saved-items workspace', async () => {
