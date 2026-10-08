@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import app from '../app.js';
+import app from './app.js';
 import { connectDatabase } from './config/database.js';
 
 let mongo;
