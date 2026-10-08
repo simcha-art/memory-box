@@ -1,34 +1,9 @@
-export type ItemType = 'Document' | 'Receipt' | 'Note' | 'Link' | 'Image';
-
-export type MemoryItem = {
-  _id: string;
-  title: string;
-  description: string;
-  type: ItemType;
-  category: string;
-  tags: string[];
-  fileUrl: string;
-  fileName: string;
-  fileSize: number;
-  date: string;
-  updatedAt: string;
-};
-
-export type Reminder = {
-  _id: string;
-  itemId: { _id: string; title: string; type: ItemType } | string;
-  title: string;
-  reminderDate: string;
-  completed: boolean;
-};
-
-export type MemoryUser = { id: string; name: string; email: string };
-
 const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export class ApiError extends Error {
   constructor(message: string, readonly status: number) {
     super(message);
+    this.name = 'ApiError';
   }
 }
 
@@ -40,19 +15,27 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
 
   const response = await fetch(`${baseUrl}${path}`, { ...options, headers });
   if (response.status === 204) return undefined as T;
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new ApiError(payload.error || 'Something went wrong', response.status);
+  const payload: unknown = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = typeof payload === 'object' && payload !== null && 'error' in payload && typeof payload.error === 'string'
+      ? payload.error
+      : 'Something went wrong';
+    throw new ApiError(message, response.status);
+  }
   return payload as T;
 }
 
-export async function downloadFile(path: string, fileName: string) {
+export async function downloadFile(path: string, fileName: string): Promise<void> {
   const token = localStorage.getItem('memorybox-token');
   const response = await fetch(`${baseUrl}${path}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!response.ok) {
-    const payload = await response.json().catch(() => ({}));
-    throw new ApiError(payload.error || 'Could not download this file', response.status);
+    const payload: unknown = await response.json().catch(() => ({}));
+    const message = typeof payload === 'object' && payload !== null && 'error' in payload && typeof payload.error === 'string'
+      ? payload.error
+      : 'Could not download this file';
+    throw new ApiError(message, response.status);
   }
   const blobUrl = URL.createObjectURL(await response.blob());
   const anchor = document.createElement('a');
