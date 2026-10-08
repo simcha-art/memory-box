@@ -2,15 +2,9 @@
   "name": "memory-box",
   "private": true,
   "type": "module",
-  "workspaces": [
-    "client"
-  ],
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "dev:client": "npm run dev --workspace client",
-    "build": "npm run build --workspace client",
-    "preview": "npm run preview --workspace client",
     "test": "vitest run",
     "test:watch": "vitest"
   },
