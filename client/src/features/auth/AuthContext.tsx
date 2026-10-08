@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { request, type MemoryUser } from './api';
+import { request } from '../../api/client';
+import type { MemoryUser } from '../../types';
 
 type AuthValue = {
   user: MemoryUser | null;
