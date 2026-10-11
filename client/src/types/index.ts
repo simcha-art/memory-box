@@ -29,6 +29,5 @@ export type MemoryUser = { id: string; name: string; email: string };
 export type Category = { _id: string; name: string };
 export type ItemInput = Pick<MemoryItem, 'title' | 'description' | 'type' | 'category' | 'url' | 'tags' | 'date'> & {
   username?: string;
-  // Only sent when the user typed one; an empty value on edit keeps the stored password.
   password?: string;
 };

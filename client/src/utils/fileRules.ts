@@ -1,6 +1,5 @@
 import type { ItemType } from '../types';
 
-// Mirrors server/config/fileRules.js — keep both in sync.
 type Format = { label: string; extensions: string[]; mimes: string[] };
 
 const formats: Record<string, Format> = {

@@ -1,6 +1,3 @@
-// Single source of truth for which attachments each item type accepts.
-// Keep client/src/utils/fileRules.ts in sync with this file.
-
 export const fileFormats = {
   pdf: { mime: 'application/pdf', extensions: ['pdf'], label: 'PDF' },
   doc: { mime: 'application/msword', extensions: ['doc'], label: 'Word (DOC)' },
@@ -10,7 +7,6 @@ export const fileFormats = {
   webp: { mime: 'image/webp', extensions: ['webp'], label: 'WEBP' },
 };
 
-// An empty list means the type takes no file at all.
 export const allowedFormatsByType = {
   Document: ['pdf', 'doc', 'docx'],
   Receipt: ['pdf', 'jpeg', 'png', 'webp'],
@@ -41,7 +37,6 @@ export function describeAllowed(type) {
   return keys.map((key) => fileFormats[key].label).join(', ');
 }
 
-// Legacy .doc files are OLE compound documents; file-type reports them as application/x-cfb.
 export function contentMatchesMime(detected, mime) {
   if (!detected) return false;
   if (mime === fileFormats.doc.mime) return detected.mime === 'application/x-cfb';

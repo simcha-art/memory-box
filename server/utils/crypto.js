@@ -1,9 +1,5 @@
 import crypto from 'node:crypto';
 
-// AES-256-GCM encryption for stored secrets (e.g. saved passwords).
-// The key comes from ENCRYPTION_KEY (preferred). If it is not set we fall back to JWT_SECRET
-// so the app works out of the box, but a dedicated key is strongly recommended:
-// rotating JWT_SECRET would otherwise make every saved password unreadable.
 const SALT = 'memorybox-secret-v1';
 let cached = { source: null, key: null };
 

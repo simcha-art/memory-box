@@ -26,7 +26,6 @@ export function ReminderCalendar({ reminders, selectedDate, onSelectDate }: { re
 
   const weekdays = useMemo(() => {
     const formatter = new Intl.DateTimeFormat(intlLocale, { weekday: 'short' });
-    // 2024-01-07 is a Sunday; the week starts on Sunday
     return Array.from({ length: 7 }, (_, i) => formatter.format(new Date(2024, 0, 7 + i)));
   }, [intlLocale]);
 

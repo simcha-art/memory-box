@@ -22,7 +22,6 @@ export function ConfirmDialog({ title, message, confirmLabel, onConfirm, onCance
     return () => document.removeEventListener('keydown', closeOnEscape);
   }, [onCancel]);
 
-  // Rendered into <body> so it always sits above side panels and never breaks list layouts.
   return createPortal(
     <Dialog title={title} onClose={onCancel} className="confirm-dialog">
       <div className="dialog-form">
