@@ -1,9 +1,25 @@
-.confirm-dialog { width: min(100%, 410px); }
-.confirm-dialog .dialog-form { padding-top: 17px; }
-.confirm-message { margin: 0; color: var(--ink-soft); font-size: 13px; line-height: 1.6; }
-.button-danger { color: #fff; background: var(--danger); }
-.button-danger:hover { filter: brightness(.92); }
-:root[data-theme='dark'] .button-danger { color: #2a100d; }
+.dialog.confirm-dialog {
+  width: min(100%, 26rem);
+}
+
+.confirm-dialog .dialog-form {
+  padding-top: 1.25rem;
+}
+
+.confirm-message {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.button.button-danger {
+  color: var(--danger-ink);
+  background: var(--danger);
+}
+
 @media (max-width: 760px) {
-  .confirm-dialog { width: 100%; }
+  .dialog.confirm-dialog {
+    width: 100%;
+  }
 }

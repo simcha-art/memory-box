@@ -1,11 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg"
-     viewBox="0 0 24 24"
-     fill="none"
-     stroke="green"
-     stroke-width="2"
-     stroke-linecap="round"
-     stroke-linejoin="round">
-  <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
-  <path d="m3.3 7 8.7 5 8.7-5"/>
-  <path d="M12 22V12"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <g transform="rotate(-6 16 16)">
+    <rect x="3" y="3" width="26" height="26" rx="3" fill="#ec4e2e" stroke="#18150f" stroke-width="2.5"/>
+    <g transform="translate(7.5 7.5) scale(0.7)" fill="none" stroke="#18150f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
+      <path d="m3.3 7 8.7 5 8.7-5"/>
+      <path d="M12 22V12"/>
+    </g>
+  </g>
 </svg>
