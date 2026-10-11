@@ -366,3 +366,29 @@ input::placeholder, textarea::placeholder { color: var(--subtle); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* Reminders calendar */
+.reminder-calendar-card { max-width: 860px; margin-bottom: 20px; padding: 18px 20px 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.calendar-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.calendar-header h2 { margin: 0; font: 700 18px var(--font-display); letter-spacing: -.02em; }
+.calendar-controls { display: flex; align-items: center; gap: 6px; }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.calendar-weekday { padding: 4px 0; color: var(--subtle); font-size: 10px; font-weight: 700; text-align: center; text-transform: uppercase; }
+.calendar-cell { min-height: 86px; display: flex; flex-direction: column; gap: 3px; padding: 6px; border: 1px solid var(--line); border-radius: 9px; background: var(--canvas); overflow: hidden; }
+.calendar-cell.is-blank { border-color: transparent; background: transparent; }
+.calendar-cell.is-clickable { cursor: pointer; }
+.calendar-cell.is-clickable:hover { border-color: var(--accent); }
+.calendar-cell.is-selected { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent); }
+.calendar-cell.is-today { border-color: var(--accent); background: var(--accent-tint); }
+.calendar-day { color: var(--ink-soft); font-size: 11px; font-weight: 700; }
+.calendar-cell.is-today .calendar-day { color: var(--accent); }
+.calendar-event { display: block; width: 100%; overflow: hidden; padding: 2px 5px; border: 0; border-radius: 5px; color: var(--accent-strong); background: var(--accent-soft); font-size: 10px; text-align: start; text-overflow: ellipsis; white-space: nowrap; }
+.calendar-event.completed { color: var(--subtle); background: var(--canvas-muted); text-decoration: line-through; }
+.selected-day-title { max-width: 860px; margin: 24px 0 12px; font: 700 15px var(--font-display); letter-spacing: -.02em; }
+.empty-state.compact { min-height: 150px; }
+.calendar-more { color: var(--muted); font-size: 9px; }
+@media (max-width: 760px) {
+  .reminder-calendar-card { padding: 12px 10px 14px; }
+  .calendar-cell { min-height: 58px; padding: 4px 3px; }
+  .calendar-event { padding: 1px 3px; font-size: 9px; }
+}
