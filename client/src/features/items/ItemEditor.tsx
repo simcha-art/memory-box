@@ -1,5 +1,5 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
-import { Eye, EyeOff, FileUp, Plus, Wand2 } from 'lucide-react';
+import { Eye, EyeOff, FileUp, Plus, Wand2, X } from 'lucide-react';
 import { Dialog } from '../../components/Dialog';
 import { usePreferences } from '../../stores/PreferencesStore';
 import { MAX_FILE_BYTES, acceptFor, fileAllowed, fileNameAllowed, formatLabelFor, inputKindFor } from '../../utils/fileRules';
@@ -38,6 +38,7 @@ export function ItemEditor({ item, categories, onClose, onSave }: {
   const [showPassword, setShowPassword] = useState(false);
   const [categoryChoice, setCategoryChoice] = useState(item?.category || '');
   const [newCategory, setNewCategory] = useState('');
+  const [tagFields, setTagFields] = useState<string[]>(item?.tags.length ? item.tags : ['']);
   const kind = inputKindFor(type);
   const staleFile = Boolean(item?.fileName && !fileNameAllowed(type, item.fileName));
 
@@ -46,6 +47,18 @@ export function ItemEditor({ item, categories, onClose, onSave }: {
   const categoryOptions = item?.category && !categoryNames.includes(item.category)
     ? [...categoryNames, item.category]
     : categoryNames;
+
+  function updateTag(index: number, value: string) {
+    setTagFields((current) => current.map((tag, i) => (i === index ? value : tag)));
+  }
+
+  function addTagField() {
+    setTagFields((current) => [...current, '']);
+  }
+
+  function removeTagField(index: number) {
+    setTagFields((current) => (current.length > 1 ? current.filter((_, i) => i !== index) : ['']));
+  }
 
   function changeType(next: ItemType) {
     setType(next);
@@ -86,7 +99,7 @@ export function ItemEditor({ item, categories, onClose, onSave }: {
       url: type === 'Link' || type === 'Password' ? String(form.get('url') || '').trim() : '',
       ...(type === 'Password' ? { username: String(form.get('username') || '').trim(), ...(password ? { password } : {}) } : {}),
       category,
-      tags: String(form.get('tags') || '').split(',').map((tag) => tag.trim()).filter(Boolean),
+      tags: [...new Set(tagFields.map((tag) => tag.trim()).filter(Boolean))],
       date: String(form.get('date') || new Date().toISOString().slice(0, 10)),
     };
     if (type === 'Password' && !password && !item?.hasPassword) return setError(t('passwordRequired'));
@@ -122,7 +135,21 @@ export function ItemEditor({ item, categories, onClose, onSave }: {
       {categoryChoice === OTHER_CATEGORY && <label>{t('categoryName')}
         <input name="new-category" value={newCategory} onChange={(event) => setNewCategory(event.target.value)} required maxLength={80} autoFocus placeholder={t('categoryPlaceholder')} />
       </label>}
-      <label>{t('tags')}<input name="tags" defaultValue={item?.tags.join(', ')} placeholder={t('tagsPlaceholder')} /><span className="field-hint">{t('tagsHint')}</span></label>
+      <div className="tag-fields">
+        <span className="tag-fields-label">{t('tags')}</span>
+        {tagFields.map((tag, index) => <div className="tag-field-row" key={index}>
+          <input
+            value={tag}
+            maxLength={40}
+            aria-label={`${t('tags')} ${index + 1}`}
+            placeholder={t('tagsPlaceholder')}
+            onChange={(event) => updateTag(index, event.target.value)}
+            onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); if (tag.trim()) addTagField(); } }}
+          />
+          {tagFields.length > 1 && <button className="icon-button icon-button-small" type="button" title={t('removeTag')} aria-label={t('removeTag')} onClick={() => removeTagField(index)}><X size={16} /></button>}
+        </div>)}
+        <button className="button button-secondary add-tag-button" type="button" onClick={addTagField}><Plus size={16} />{t('addTag')}</button>
+      </div>
       <label>{t('description')}<textarea name="description" rows={4} maxLength={10000} defaultValue={item?.description} placeholder={t('descriptionPlaceholder')} /></label>
       {kind === 'link' && <label>{t('linkLabel')}<input name="url" type="url" required maxLength={2048} defaultValue={item?.url} placeholder={t('linkPlaceholder')} dir="ltr" pattern="https?://.+" /><span className="field-hint">{t('linkHint')}</span></label>}
       {kind === 'none' && <p className="field-hint">{t('noteHint')}</p>}
