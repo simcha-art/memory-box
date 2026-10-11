@@ -3,14 +3,12 @@ import Item from '../models/Item.js';
 import { DEFAULT_CATEGORIES, LEGACY_DEFAULT_NAMES } from '../config/defaultCategories.js';
 import { ApiError } from '../utils/ApiError.js';
 
-// Makes sure the user has exactly the fixed categories. Safe to call many times.
 async function ensureDefaultCategories(userId) {
   const stored = await Category.find({ userId, isDefault: true }).select('name');
   const names = stored.map((category) => category.name);
   const stale = names.filter((name) => !DEFAULT_CATEGORIES.includes(name));
   if (!stale.length && DEFAULT_CATEGORIES.every((name) => names.includes(name))) return;
 
-  // Move items from the old Hebrew names to the stable keys, then drop the old categories.
   for (const oldName of stale) {
     const key = LEGACY_DEFAULT_NAMES[oldName];
     if (key) await Item.updateMany({ userId, category: oldName }, { category: key });
@@ -26,14 +24,12 @@ async function ensureDefaultCategories(userId) {
       },
     })));
   } catch (error) {
-    // Two requests seeding at the same moment: the other one already did the work.
     if (error?.code !== 11000) throw error;
   }
 }
 
 export async function listCategories(userId) {
   await ensureDefaultCategories(userId);
-  // Fixed categories first (in their set order), then the user's own by name.
   return Category.find({ userId }).sort({ isDefault: -1, order: 1, name: 1 });
 }
 

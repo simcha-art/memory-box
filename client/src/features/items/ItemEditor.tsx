@@ -20,7 +20,6 @@ function generatePassword(length = 20): string {
 
 const itemTypes: ItemType[] = ['Document', 'Receipt', 'Note', 'Link', 'Image', 'Password'];
 
-// Value of the "Other…" option in the category select.
 const OTHER_CATEGORY = '__other__';
 
 export function ItemEditor({ item, categories, onClose, onSave }: {
@@ -43,7 +42,6 @@ export function ItemEditor({ item, categories, onClose, onSave }: {
   const staleFile = Boolean(item?.fileName && !fileNameAllowed(type, item.fileName));
 
   const categoryNames = categories.map((category) => category.name);
-  // An existing item may use a category that is not in the list (e.g. an older one) — keep it selectable.
   const categoryOptions = item?.category && !categoryNames.includes(item.category)
     ? [...categoryNames, item.category]
     : categoryNames;
@@ -88,7 +86,6 @@ export function ItemEditor({ item, categories, onClose, onSave }: {
     if (categoryChoice === OTHER_CATEGORY) {
       const typed = newCategory.trim();
       if (!typed) return setError(t('categoryName'));
-      // Reuse an existing category (fixed or custom) instead of creating a duplicate.
       category = findCategoryName(typed, categoryNames) || typed;
     }
 

@@ -27,7 +27,6 @@ const itemBaseSchema = z.object({
   type: z.enum(itemTypes),
   url: linkUrl.or(z.literal('')).optional(),
   username: z.string().trim().max(200).optional(),
-  // Deliberately not trimmed: passwords may legitimately start or end with spaces.
   password: z.string().max(512).optional(),
   category: z.string().trim().max(80).optional(),
   tags: z.array(z.string().trim().min(1).max(40)).max(30).optional(),

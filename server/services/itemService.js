@@ -8,7 +8,6 @@ import { decryptSecret, encryptSecret } from '../utils/crypto.js';
 
 const searchableFields = ['title', 'tags', 'description', 'category', 'username'];
 
-// Types that may carry a url: links, and the website of a saved password.
 const urlTypes = new Set(['Link', 'Password']);
 const fileDirectory = path.resolve(process.env.UPLOAD_DIR || 'uploads');
 
@@ -51,14 +50,12 @@ export async function updateItem(userId, itemId, input, file) {
   if (item.type === 'Link' && !item.url) throw new ApiError(400, 'A link is required for items of type Link');
 
   if (item.type === 'Password') {
-    // An empty password on update means "keep the current one".
     if (password) Object.assign(item, { passwordEnc: encryptSecret(password), hasPassword: true });
     if (!item.hasPassword) throw new ApiError(400, 'A password is required for items of type Password');
   } else {
     Object.assign(item, { username: '', passwordEnc: '', hasPassword: false });
   }
 
-  // Changing the type must not leave behind a file the new type does not accept.
   let dropOldFile = Boolean(file && oldStorageName);
   if (!file && item.fileName && !typeAcceptsFileName(item.type, item.fileName)) {
     Object.assign(item, { fileUrl: '', fileName: '', fileSize: 0, storageName: '' });

@@ -49,8 +49,6 @@ export function ItemDetails({ item, onClose, onEdit, onOpenRelated }: {
     };
   }, [item._id, setError, t]);
 
-  // The password is fetched only on demand, held in memory only, and cleared when hidden,
-  // after a timeout, or when another item is opened.
   useEffect(() => {
     setSecret(null);
     setCopied(null);
