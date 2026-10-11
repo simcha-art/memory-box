@@ -239,6 +239,7 @@ input::placeholder, textarea::placeholder { color: var(--subtle); }
 .file-control-copy { min-width: 0; flex: 1; display: grid; gap: 4px; }
 .file-control-copy strong { overflow: hidden; color: var(--ink-soft); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .file-control-copy small { color: var(--muted); font-size: 9px; }
+.file-control.is-invalid { border-color: var(--danger); }
 .file-control input { width: auto; max-width: 170px; min-height: auto; padding: 0; border: 0; font-size: 10px; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 9px; padding-top: 3px; }
 .category-dialog { width: min(100%, 430px); }

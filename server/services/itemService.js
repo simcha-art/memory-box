@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import Item from '../models/Item.js';
 import Reminder from '../models/Reminder.js';
+import { typeAcceptsFileName } from '../config/fileRules.js';
 import { ApiError } from '../utils/ApiError.js';
 
 const searchableFields = ['title', 'tags', 'description', 'category'];
@@ -38,8 +39,17 @@ export async function updateItem(userId, itemId, input, file) {
   const oldStorageName = item.storageName;
   Object.assign(item, input);
   if (file) Object.assign(item, fileFields(file));
+  if (item.type !== 'Link') item.url = '';
+  if (item.type === 'Link' && !item.url) throw new ApiError(400, 'A link is required for items of type Link');
+
+  // Changing the type must not leave behind a file the new type does not accept.
+  let dropOldFile = Boolean(file && oldStorageName);
+  if (!file && item.fileName && !typeAcceptsFileName(item.type, item.fileName)) {
+    Object.assign(item, { fileUrl: '', fileName: '', fileSize: 0, storageName: '' });
+    dropOldFile = true;
+  }
   await item.save();
-  if (file && oldStorageName) await removeStoredFile(oldStorageName);
+  if (dropOldFile && oldStorageName) await removeStoredFile(oldStorageName);
   return item;
 }
 

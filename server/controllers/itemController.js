@@ -2,13 +2,19 @@ import fs from 'node:fs/promises';
 import { fileTypeFromFile } from 'file-type';
 import { createItem, deleteItem, findRelatedItems, getItem, getStoredFile, listItems, searchItems, updateItem } from '../services/itemService.js';
 import { itemListSchema, itemSchema, itemUpdateSchema } from '../validation/schemas.js';
-import { validExtensions } from '../middleware/upload.js';
+import { contentMatchesMime, describeAllowed, typeAcceptsMime } from '../config/fileRules.js';
 import { ApiError } from '../utils/ApiError.js';
 
-async function validateUploadedFile(file) {
+async function validateUploadedFile(file, type) {
   if (!file) return;
+  if (!typeAcceptsMime(type, file.mimetype)) {
+    const allowed = describeAllowed(type);
+    throw new ApiError(400, allowed
+      ? `Items of type ${type} accept only these files: ${allowed}`
+      : `Items of type ${type} cannot have a file attached`);
+  }
   const detected = await fileTypeFromFile(file.path);
-  if (!detected || detected.mime !== file.mimetype || !validExtensions.get(file.mimetype)?.includes(detected.ext)) {
+  if (!contentMatchesMime(detected, file.mimetype)) {
     throw new ApiError(400, 'The uploaded file content does not match a supported file type');
   }
 }
@@ -45,8 +51,9 @@ export async function list(request, response) {
 export async function create(request, response) {
   let input;
   try {
-    await validateUploadedFile(request.file);
     input = parseBody(request.body, itemSchema);
+    await validateUploadedFile(request.file, input.type);
+    if (input.type !== 'Link') input.url = '';
     const item = await createItem(request.userId, input, request.file);
     item.fileUrl = item.fileName ? `/items/${item._id}/file` : '';
     await item.save();
@@ -64,8 +71,11 @@ export async function get(request, response) {
 export async function update(request, response) {
   let input;
   try {
-    await validateUploadedFile(request.file);
     input = parseBody(request.body, itemUpdateSchema);
+    if (request.file) {
+      const current = input.type ? null : await getItem(request.userId, request.params.id);
+      await validateUploadedFile(request.file, input.type || current.type);
+    }
     const item = await updateItem(request.userId, request.params.id, input, request.file);
     item.fileUrl = item.fileName ? `/items/${item._id}/file` : '';
     await item.save();

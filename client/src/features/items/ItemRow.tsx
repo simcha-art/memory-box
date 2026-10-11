@@ -15,7 +15,7 @@ export function ItemRow({ item, onClick }: { item: MemoryItem; onClick: () => vo
   const { t } = usePreferences();
   const dateFormat = useDateFormat();
   const Icon = typeIcons[item.type as ItemType] || FileText;
-  const summary = item.description || item.fileName || item.tags.slice(0, 3).join(' · ') || t('noDetails');
+  const summary = item.description || item.fileName || item.url || item.tags.slice(0, 3).join(' · ') || t('noDetails');
   return <button className="item-row" type="button" onClick={onClick}>
     <span className={`item-type-icon type-${item.type.toLowerCase()}`}><Icon size={18} /></span>
     <span className="item-copy"><strong>{item.title}</strong><span>{summary}</span></span>

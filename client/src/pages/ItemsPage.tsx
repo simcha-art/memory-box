@@ -39,7 +39,7 @@ export function ItemsPage() {
       <button className="button button-primary" type="button" onClick={() => setEditing(null)}><Plus size={17} />{t('addToBox')}</button>
     </section>
     <div className="toolbar">
-      <label className="search-field"><Search size={18} /><input aria-label={t('search')} placeholder={t('search')} value={query} onChange={(event) => updateSearch(event.target.value)} /></label>
+      <label className="search-field"><Search size={18} /><input aria-label={t('allSaved')} placeholder={t('search')} value={query} onChange={(event) => updateSearch(event.target.value)} /></label>
       <label className="filter-field"><Tag size={16} /><select aria-label={t('filterType')} value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as ItemType | '')}>
         <option value="">{t('allTypes')}</option>{itemTypes.map((type) => <option key={type} value={type}>{t(type)}</option>)}
       </select></label>

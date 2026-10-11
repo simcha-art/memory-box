@@ -8,6 +8,7 @@ import { App } from './App';
 const fetchMock = vi.fn();
 
 function renderApp() {
+  window.history.pushState({}, '', '/');
   return render(<BrowserRouter><AuthProvider><App /></AuthProvider></BrowserRouter>);
 }
 

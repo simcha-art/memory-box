@@ -13,16 +13,30 @@ export const loginSchema = z.object({
   password: z.string().min(1).max(128),
 });
 
-export const itemSchema = z.object({
+const linkUrl = z.string().trim().max(2048).refine((value) => {
+  try {
+    return ['http:', 'https:'].includes(new URL(value).protocol);
+  } catch {
+    return false;
+  }
+}, 'Enter a valid link starting with http:// or https://');
+
+const itemBaseSchema = z.object({
   title: z.string().trim().min(1).max(160),
   description: z.string().trim().max(10000).optional(),
   type: z.enum(itemTypes),
+  url: linkUrl.or(z.literal('')).optional(),
   category: z.string().trim().max(80).optional(),
   tags: z.array(z.string().trim().min(1).max(40)).max(30).optional(),
   date: z.coerce.date().optional(),
 });
 
-export const itemUpdateSchema = itemSchema.partial().refine((value) => Object.keys(value).length > 0, {
+export const itemSchema = itemBaseSchema.refine((value) => value.type !== 'Link' || Boolean(value.url), {
+  message: 'A link is required for items of type Link',
+  path: ['url'],
+});
+
+export const itemUpdateSchema = itemBaseSchema.partial().refine((value) => Object.keys(value).length > 0, {
   message: 'At least one item field is required',
 });
 
