@@ -1,4 +1,4 @@
-export type ItemType = 'Document' | 'Receipt' | 'Note' | 'Link' | 'Image';
+export type ItemType = 'Document' | 'Receipt' | 'Note' | 'Link' | 'Image' | 'Password';
 
 export type MemoryItem = {
   _id: string;
@@ -7,6 +7,8 @@ export type MemoryItem = {
   type: ItemType;
   category: string;
   url: string;
+  username: string;
+  hasPassword: boolean;
   tags: string[];
   fileUrl: string;
   fileName: string;
@@ -25,4 +27,8 @@ export type Reminder = {
 
 export type MemoryUser = { id: string; name: string; email: string };
 export type Category = { _id: string; name: string };
-export type ItemInput = Pick<MemoryItem, 'title' | 'description' | 'type' | 'category' | 'url' | 'tags' | 'date'>;
+export type ItemInput = Pick<MemoryItem, 'title' | 'description' | 'type' | 'category' | 'url' | 'tags' | 'date'> & {
+  username?: string;
+  // Only sent when the user typed one; an empty value on edit keeps the stored password.
+  password?: string;
+};

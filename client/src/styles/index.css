@@ -174,11 +174,13 @@ input::placeholder, textarea::placeholder { color: var(--subtle); }
 .type-note { color: #978541; background: #f5f1dd; }
 .type-link { color: #3e8a70; background: #e5f3ec; }
 .type-image { color: #9b6187; background: #f6eaf1; }
+.type-password { color: #6a5fb3; background: #eeebfa; }
 :root[data-theme='dark'] .type-document { color: #a9c2ff; background: #2b3b58; }
 :root[data-theme='dark'] .type-receipt { color: #e4ad85; background: #49382d; }
 :root[data-theme='dark'] .type-note { color: #d8c776; background: #47432d; }
 :root[data-theme='dark'] .type-link { color: #86d3b2; background: #294a3b; }
 :root[data-theme='dark'] .type-image { color: #dda7c7; background: #4c3446; }
+:root[data-theme='dark'] .type-password { color: #bdb4f0; background: #3a3556; }
 .item-copy { min-width: 0; display: grid; gap: 6px; }
 .item-copy strong { overflow: hidden; color: var(--ink); font-size: 12px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .item-copy span { overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
@@ -393,3 +395,10 @@ input::placeholder, textarea::placeholder { color: var(--subtle); }
   .calendar-cell { min-height: 58px; padding: 4px 3px; }
   .calendar-event { padding: 1px 3px; font-size: 9px; }
 }
+.secret-input { display: flex; align-items: center; gap: 4px; }
+.secret-input input { flex: 1; min-width: 0; }
+.secret-card { margin: 19px 0; padding: 4px 13px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.secret-row { display: flex; align-items: center; gap: 8px; padding: 9px 0; }
+.secret-row + .secret-row { border-top: 1px solid var(--line); }
+.secret-label { flex: 0 0 38%; color: var(--muted); font-size: 12px; }
+.secret-value { flex: 1; min-width: 0; overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; font-weight: 500; }

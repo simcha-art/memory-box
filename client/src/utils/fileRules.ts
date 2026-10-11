@@ -17,14 +17,16 @@ const allowedByType: Record<ItemType, string[]> = {
   Image: ['jpeg', 'png', 'webp'],
   Note: [],
   Link: [],
+  Password: [],
 };
 
 export const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
-export type TypeInputKind = 'file' | 'link' | 'none';
+export type TypeInputKind = 'file' | 'link' | 'password' | 'none';
 
 export function inputKindFor(type: ItemType): TypeInputKind {
   if (type === 'Link') return 'link';
+  if (type === 'Password') return 'password';
   return allowedByType[type].length ? 'file' : 'none';
 }
 

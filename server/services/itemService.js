@@ -4,8 +4,12 @@ import Item from '../models/Item.js';
 import Reminder from '../models/Reminder.js';
 import { typeAcceptsFileName } from '../config/fileRules.js';
 import { ApiError } from '../utils/ApiError.js';
+import { decryptSecret, encryptSecret } from '../utils/crypto.js';
 
-const searchableFields = ['title', 'tags', 'description', 'category'];
+const searchableFields = ['title', 'tags', 'description', 'category', 'username'];
+
+// Types that may carry a url: links, and the website of a saved password.
+const urlTypes = new Set(['Link', 'Password']);
 const fileDirectory = path.resolve(process.env.UPLOAD_DIR || 'uploads');
 
 function escapeRegex(value) {
@@ -21,7 +25,10 @@ export async function listItems(userId, filters) {
 }
 
 export async function createItem(userId, input, file) {
-  const data = { ...input, userId };
+  const { password, ...rest } = input;
+  const data = { ...rest, userId };
+  if (data.type !== 'Password') data.username = '';
+  if (data.type === 'Password' && password) Object.assign(data, { passwordEnc: encryptSecret(password), hasPassword: true });
   if (file) Object.assign(data, fileFields(file));
   const item = await Item.create(data);
   item.storageName = data.storageName || '';
@@ -29,7 +36,7 @@ export async function createItem(userId, input, file) {
 }
 
 export async function getItem(userId, itemId) {
-  const item = await Item.findOne({ _id: itemId, userId }).select('+storageName');
+  const item = await Item.findOne({ _id: itemId, userId }).select('+storageName +passwordEnc');
   if (!item) throw new ApiError(404, 'Item not found');
   return item;
 }
@@ -37,10 +44,19 @@ export async function getItem(userId, itemId) {
 export async function updateItem(userId, itemId, input, file) {
   const item = await getItem(userId, itemId);
   const oldStorageName = item.storageName;
-  Object.assign(item, input);
+  const { password, ...fields } = input;
+  Object.assign(item, fields);
   if (file) Object.assign(item, fileFields(file));
-  if (item.type !== 'Link') item.url = '';
+  if (!urlTypes.has(item.type)) item.url = '';
   if (item.type === 'Link' && !item.url) throw new ApiError(400, 'A link is required for items of type Link');
+
+  if (item.type === 'Password') {
+    // An empty password on update means "keep the current one".
+    if (password) Object.assign(item, { passwordEnc: encryptSecret(password), hasPassword: true });
+    if (!item.hasPassword) throw new ApiError(400, 'A password is required for items of type Password');
+  } else {
+    Object.assign(item, { username: '', passwordEnc: '', hasPassword: false });
+  }
 
   // Changing the type must not leave behind a file the new type does not accept.
   let dropOldFile = Boolean(file && oldStorageName);
@@ -51,6 +67,12 @@ export async function updateItem(userId, itemId, input, file) {
   await item.save();
   if (dropOldFile && oldStorageName) await removeStoredFile(oldStorageName);
   return item;
+}
+
+export async function revealPassword(userId, itemId) {
+  const item = await getItem(userId, itemId);
+  if (item.type !== 'Password' || !item.passwordEnc) throw new ApiError(404, 'No saved password for this item');
+  return decryptSecret(item.passwordEnc);
 }
 
 export async function deleteItem(userId, itemId) {

@@ -1,4 +1,4 @@
-import { Archive, ChevronRight, FileText, Image, Link as LinkIcon, ReceiptText } from 'lucide-react';
+import { Archive, ChevronRight, FileText, Image, KeyRound, Link as LinkIcon, ReceiptText } from 'lucide-react';
 import { useDateFormat } from '../../hooks/useDateFormat';
 import { usePreferences } from '../../stores/PreferencesStore';
 import type { ItemType, MemoryItem } from '../../types';
@@ -9,13 +9,14 @@ const typeIcons = {
   Note: Archive,
   Link: LinkIcon,
   Image,
+  Password: KeyRound,
 };
 
 export function ItemRow({ item, onClick }: { item: MemoryItem; onClick: () => void }) {
   const { t } = usePreferences();
   const dateFormat = useDateFormat();
   const Icon = typeIcons[item.type as ItemType] || FileText;
-  const summary = item.description || item.fileName || item.url || item.tags.slice(0, 3).join(' · ') || t('noDetails');
+  const summary = item.description || item.username || item.fileName || item.url || item.tags.slice(0, 3).join(' · ') || t('noDetails');
   return <button className="item-row" type="button" onClick={onClick}>
     <span className={`item-type-icon type-${item.type.toLowerCase()}`}><Icon size={18} /></span>
     <span className="item-copy"><strong>{item.title}</strong><span>{summary}</span></span>

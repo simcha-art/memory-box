@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Archive, CalendarDays, ChevronRight, Download, FileText, Image, Link as LinkIcon, Pencil, ReceiptText, Tag, Trash2, X } from 'lucide-react';
-import { downloadItemFile, getRelatedItems } from '../../api/items';
+import { Archive, CalendarDays, Check, ChevronRight, Copy, Download, Eye, EyeOff, FileText, Image, KeyRound, Link as LinkIcon, Pencil, ReceiptText, Tag, Trash2, X } from 'lucide-react';
+import { downloadItemFile, getRelatedItems, revealItemPassword } from '../../api/items';
 import { useDateFormat } from '../../hooks/useDateFormat';
 import { usePreferences } from '../../stores/PreferencesStore';
 import { useWorkspace } from '../../stores/WorkspaceStore';
@@ -13,7 +13,10 @@ const typeIcons = {
   Note: Archive,
   Link: LinkIcon,
   Image,
+  Password: KeyRound,
 };
+
+const AUTO_HIDE_MS = 30_000;
 
 export function ItemDetails({ item, onClose, onEdit, onOpenRelated }: {
   item: MemoryItem;
@@ -26,6 +29,8 @@ export function ItemDetails({ item, onClose, onEdit, onOpenRelated }: {
   const dateFormat = useDateFormat();
   const [related, setRelated] = useState<MemoryItem[]>([]);
   const [reminderError, setReminderError] = useState('');
+  const [secret, setSecret] = useState<string | null>(null);
+  const [copied, setCopied] = useState<'username' | 'password' | null>(null);
   const Icon = typeIcons[item.type as ItemType] || FileText;
   const itemReminders = reminders.filter((reminder) => getReminderItemId(reminder) === item._id);
 
@@ -42,6 +47,44 @@ export function ItemDetails({ item, onClose, onEdit, onOpenRelated }: {
       cancelled = true;
     };
   }, [item._id, setError, t]);
+
+  // The password is fetched only on demand, held in memory only, and cleared when hidden,
+  // after a timeout, or when another item is opened.
+  useEffect(() => {
+    setSecret(null);
+    setCopied(null);
+  }, [item._id]);
+
+  useEffect(() => {
+    if (secret === null) return undefined;
+    const timer = window.setTimeout(() => setSecret(null), AUTO_HIDE_MS);
+    return () => window.clearTimeout(timer);
+  }, [secret]);
+
+  useEffect(() => {
+    if (!copied) return undefined;
+    const timer = window.setTimeout(() => setCopied(null), 1500);
+    return () => window.clearTimeout(timer);
+  }, [copied]);
+
+  async function toggleSecret() {
+    if (secret !== null) return setSecret(null);
+    try {
+      setSecret(await revealItemPassword(item._id));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : t('passwordError'));
+    }
+  }
+
+  async function copy(kind: 'username' | 'password') {
+    try {
+      const value = kind === 'username' ? item.username : await revealItemPassword(item._id);
+      await navigator.clipboard.writeText(value);
+      setCopied(kind);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : t('passwordError'));
+    }
+  }
 
   async function submitReminder(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -82,7 +125,20 @@ export function ItemDetails({ item, onClose, onEdit, onOpenRelated }: {
         <p className="eyebrow">{item.category || t('noCategory')} <span>·</span> {t(item.type)} · {dateFormat.format(new Date(item.date || item.updatedAt))}</p>
         <h2>{item.title}</h2>
         {item.description && <p className="detail-description">{item.description}</p>}
-        {item.type === 'Link' && item.url && <a className="attachment-card" href={item.url} target="_blank" rel="noopener noreferrer">
+        {item.type === 'Password' && <section className="secret-card" aria-label={t('Password')}>
+          {item.username && <div className="secret-row">
+            <span className="secret-label">{t('username')}</span>
+            <strong className="secret-value" dir="ltr">{item.username}</strong>
+            <button className="icon-button icon-button-small" type="button" title={t('copy')} aria-label={t('copy')} onClick={() => void copy('username')}>{copied === 'username' ? <Check size={15} /> : <Copy size={15} />}</button>
+          </div>}
+          <div className="secret-row">
+            <span className="secret-label">{t('passwordField')}</span>
+            <strong className="secret-value" dir="ltr">{secret !== null ? secret : '••••••••••'}</strong>
+            <button className="icon-button icon-button-small" type="button" title={secret !== null ? t('hidePassword') : t('showPassword')} aria-label={secret !== null ? t('hidePassword') : t('showPassword')} onClick={() => void toggleSecret()}>{secret !== null ? <EyeOff size={15} /> : <Eye size={15} />}</button>
+            <button className="icon-button icon-button-small" type="button" title={t('copy')} aria-label={t('copy')} onClick={() => void copy('password')}>{copied === 'password' ? <Check size={15} /> : <Copy size={15} />}</button>
+          </div>
+        </section>}
+        {(item.type === 'Link' || item.type === 'Password') && item.url && <a className="attachment-card" href={item.url} target="_blank" rel="noopener noreferrer">
           <span className="attachment-icon"><LinkIcon size={18} /></span><span className="attachment-name"><strong dir="ltr">{item.url}</strong><small>{t('openLink')}</small></span><ChevronRight size={17} />
         </a>}
         {item.fileName && <button className="attachment-card" type="button" onClick={() => void downloadItemFile(item).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : t('fileError')))}>

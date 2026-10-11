@@ -9,7 +9,7 @@ import { usePreferences } from '../stores/PreferencesStore';
 import type { ItemType, MemoryItem } from '../types';
 import { useDateFormat } from '../hooks/useDateFormat';
 
-const itemTypes: ItemType[] = ['Document', 'Receipt', 'Note', 'Link', 'Image'];
+const itemTypes: ItemType[] = ['Document', 'Receipt', 'Note', 'Link', 'Image', 'Password'];
 
 export function ItemsPage() {
   const [searchParams] = useSearchParams();

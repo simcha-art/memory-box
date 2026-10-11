@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import { fileTypeFromFile } from 'file-type';
-import { createItem, deleteItem, findRelatedItems, getItem, getStoredFile, listItems, searchItems, updateItem } from '../services/itemService.js';
+import { createItem, deleteItem, findRelatedItems, getItem, getStoredFile, listItems, revealPassword, searchItems, updateItem } from '../services/itemService.js';
 import { itemListSchema, itemSchema, itemUpdateSchema } from '../validation/schemas.js';
 import { contentMatchesMime, describeAllowed, typeAcceptsMime } from '../config/fileRules.js';
 import { ApiError } from '../utils/ApiError.js';
@@ -29,7 +29,7 @@ function parseBody(body, schema) {
       normalized.tags = normalized.tags.split(',').map((tag) => tag.trim()).filter(Boolean);
     }
   }
-  for (const field of ['title', 'description', 'type', 'category', 'date']) {
+  for (const field of ['title', 'description', 'type', 'category', 'date', 'username']) {
     if (typeof normalized[field] === 'string') normalized[field] = normalized[field].trim();
   }
   return schema.parse(normalized);
@@ -38,6 +38,7 @@ function parseBody(body, schema) {
 function itemResponse(item) {
   const data = item.toObject();
   delete data.storageName;
+  delete data.passwordEnc;
   if (data.fileName) data.fileUrl = `/items/${item._id}/file`;
   return data;
 }
@@ -53,7 +54,7 @@ export async function create(request, response) {
   try {
     input = parseBody(request.body, itemSchema);
     await validateUploadedFile(request.file, input.type);
-    if (input.type !== 'Link') input.url = '';
+    if (input.type !== 'Link' && input.type !== 'Password') input.url = '';
     const item = await createItem(request.userId, input, request.file);
     item.fileUrl = item.fileName ? `/items/${item._id}/file` : '';
     await item.save();
@@ -101,6 +102,12 @@ export async function search(request, response) {
 export async function related(request, response) {
   const items = await findRelatedItems(request.userId, request.params.id);
   response.json({ items: items.map(itemResponse) });
+}
+
+export async function secret(request, response) {
+  const password = await revealPassword(request.userId, request.params.id);
+  response.set('Cache-Control', 'no-store');
+  response.json({ password });
 }
 
 export async function download(request, response) {
