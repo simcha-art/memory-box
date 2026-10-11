@@ -24,7 +24,7 @@ export function ItemDetails({ item, onClose, onEdit, onOpenRelated }: {
   onEdit: () => void;
   onOpenRelated: (item: MemoryItem) => void;
 }) {
-  const { reminders, deleteItem, addReminder, toggleReminder, setError } = useWorkspace();
+  const { reminders, deleteItem, addReminder, toggleReminder, deleteReminder, setError } = useWorkspace();
   const { t } = usePreferences();
   const dateFormat = useDateFormat();
   const [related, setRelated] = useState<MemoryItem[]>([]);
@@ -159,6 +159,7 @@ export function ItemDetails({ item, onClose, onEdit, onOpenRelated }: {
           {itemReminders.map((reminder) => <div className={`detail-reminder ${reminder.completed ? 'is-complete' : ''}`} key={reminder._id}>
             <button className="check-button" type="button" aria-label={reminder.completed ? t('reopenReminder') : t('completeReminder')} onClick={() => void toggleReminder(reminder)}>{reminder.completed ? '✓' : ''}</button>
             <span>{reminder.title}</span><time>{dateFormat.format(new Date(reminder.reminderDate))}</time>
+            <button className="icon-button icon-button-small danger-action" type="button" title={t('deleteReminder')} aria-label={t('deleteReminder')} onClick={() => { if (window.confirm(t('reminderConfirmation'))) void deleteReminder(reminder); }}><Trash2 size={14} /></button>
           </div>)}
           <form className="reminder-form" onSubmit={submitReminder}>
             <input name="title" required maxLength={160} aria-label={t('reminderTitle')} placeholder={t('reminderTitle')} />

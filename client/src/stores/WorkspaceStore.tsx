@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useDeferredValue, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { createCategory as createCategoryRequest, listCategories } from '../api/categories';
 import { listItems, removeItem, saveItem as saveItemRequest, searchItems } from '../api/items';
-import { createReminder as createReminderRequest, listReminders, setReminderCompleted } from '../api/reminders';
+import { createReminder as createReminderRequest, deleteReminder as deleteReminderRequest, listReminders, setReminderCompleted } from '../api/reminders';
 import type { Category, ItemInput, MemoryItem, Reminder } from '../types';
 import { useAuth } from '../features/auth/AuthContext';
 import { usePreferences } from './PreferencesStore';
@@ -26,6 +26,7 @@ type WorkspaceValue = {
   addCategory: (name: string) => Promise<Category>;
   addReminder: (item: MemoryItem, title: string, date: string) => Promise<void>;
   toggleReminder: (reminder: Reminder) => Promise<void>;
+  deleteReminder: (reminder: Reminder) => Promise<void>;
 };
 
 const WorkspaceContext = createContext<WorkspaceValue | null>(null);
@@ -145,6 +146,17 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
   }, [refresh, t]);
 
+  const deleteReminder = useCallback(async (reminder: Reminder) => {
+    setError('');
+    try {
+      await deleteReminderRequest(reminder._id);
+      setNotice({ kind: 'success', message: t('reminderDeleted') });
+      await refresh();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : t('reminderError'));
+    }
+  }, [refresh, t]);
+
   const value = useMemo<WorkspaceValue>(() => ({
     items,
     searchResults,
@@ -164,7 +176,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     addCategory,
     addReminder,
     toggleReminder,
-  }), [items, searchResults, reminders, categories, loading, searching, error, notice, refresh, search, saveItem, deleteItem, addCategory, addReminder, toggleReminder]);
+    deleteReminder,
+  }), [items, searchResults, reminders, categories, loading, searching, error, notice, refresh, search, saveItem, deleteItem, addCategory, addReminder, toggleReminder, deleteReminder]);
 
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;
 }
