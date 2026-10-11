@@ -5,10 +5,10 @@ export async function listReminders(): Promise<Reminder[]> {
   return (await request<{ reminders: Reminder[] }>('/reminders')).reminders;
 }
 
-export async function createReminder(itemId: string, title: string, reminderDate: string): Promise<void> {
+export async function createReminder(itemId: string, title: string, reminderDate: string, timezone: string): Promise<void> {
   await request('/reminders', {
     method: 'POST',
-    body: JSON.stringify({ itemId, title, reminderDate: new Date(reminderDate).toISOString() }),
+    body: JSON.stringify({ itemId, title, reminderDate: new Date(reminderDate).toISOString(), timezone }),
   });
 }
 

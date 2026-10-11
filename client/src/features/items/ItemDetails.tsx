@@ -93,7 +93,8 @@ export function ItemDetails({ item, onClose, onEdit, onOpenRelated }: {
     const title = String(form.get('title') || '').trim();
     const date = String(form.get('date') || '');
     try {
-      await addReminder(item, title, date);
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+      await addReminder(item, title, date, timezone);
       formElement.reset();
       setReminderError('');
     } catch (reason) {

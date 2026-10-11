@@ -15,6 +15,7 @@ export async function get(request, response) {
 
 export async function create(request, response) {
   const input = reminderSchema.parse(request.body);
+  input.userEmail = request.userEmail; 
   response.status(201).json({ reminder: await createReminder(request.userId, input) });
 }
 
