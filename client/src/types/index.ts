@@ -22,6 +22,7 @@ export type Reminder = {
   itemId: { _id: string; title: string; type: ItemType } | string;
   title: string;
   reminderDate: string;
+  timezone?: string;
   completed: boolean;
 };
 

@@ -4,6 +4,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import app from './app.js';
 import { connectDatabase } from './config/database.js';
+import Reminder from './models/Reminder.js';
+import { getRemindersBeforeNow } from './services/reminderService.js';
 
 let mongo;
 
@@ -175,5 +177,52 @@ describe('MemoryBox API', () => {
 
     await asUser(account.token).delete(`/api/items/${item._id}`).expect(204);
     await asUser(account.token).get(`/api/reminders/${reminder.body.reminder._id}`).expect(404);
+  });
+
+  it('stores reminder timezones and selects only overdue incomplete unsent reminders', async () => {
+    const account = await register('Notifications', `notifications-${Date.now()}@example.com`);
+    const api = asUser(account.token);
+    const item = await addItem(account.token);
+    const reminderDate = new Date(Date.now() - 60_000).toISOString();
+
+    const due = await api.post('/api/reminders').send({
+      itemId: item._id,
+      title: 'Due reminder',
+      reminderDate,
+      timezone: 'America/New_York',
+    }).expect(201);
+    expect(due.body.reminder.timezone).toBe('America/New_York');
+
+    const completed = await api.post('/api/reminders').send({
+      itemId: item._id,
+      title: 'Completed reminder',
+      reminderDate,
+    }).expect(201);
+    expect(completed.body.reminder.timezone).toBe('UTC');
+    await api.patch(`/api/reminders/${completed.body.reminder._id}`).send({ completed: true }).expect(200);
+    const sent = await api.post('/api/reminders').send({
+      itemId: item._id,
+      title: 'Already sent',
+      reminderDate,
+    }).expect(201);
+    await Reminder.updateOne({ _id: sent.body.reminder._id }, { isSent: true });
+
+    const dueIds = (await getRemindersBeforeNow()).map((reminder) => String(reminder._id));
+    expect(dueIds).toContain(due.body.reminder._id);
+    expect(dueIds).not.toContain(completed.body.reminder._id);
+    expect(dueIds).not.toContain(sent.body.reminder._id);
+
+    await Reminder.updateOne({ _id: due.body.reminder._id }, { isSent: true });
+    const rescheduled = await api.patch(`/api/reminders/${due.body.reminder._id}`).send({
+      reminderDate: new Date(Date.now() + 86_400_000).toISOString(),
+    }).expect(200);
+    expect(rescheduled.body.reminder.isSent).toBe(false);
+
+    await api.post('/api/reminders').send({
+      itemId: item._id,
+      title: 'Invalid timezone',
+      reminderDate,
+      timezone: 'Mars/Olympus',
+    }).expect(400);
   });
 });
