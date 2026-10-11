@@ -24,7 +24,7 @@ type WorkspaceValue = {
   saveItem: (input: ItemInput, file?: File, existingItem?: MemoryItem) => Promise<MemoryItem>;
   deleteItem: (item: MemoryItem) => Promise<void>;
   addCategory: (name: string) => Promise<Category>;
-  addReminder: (item: MemoryItem, title: string, date: string) => Promise<void>;
+  addReminder: (item: MemoryItem, title: string, date: string, timezone: string) => Promise<void>;
   toggleReminder: (reminder: Reminder) => Promise<void>;
   deleteReminder: (reminder: Reminder) => Promise<void>;
 };
@@ -129,9 +129,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     return category;
   }, []);
 
-  const addReminder = useCallback(async (item: MemoryItem, title: string, date: string) => {
+  const addReminder = useCallback(async (item: MemoryItem, title: string, date: string, timezone: string) => {
     setError('');
-    await createReminderRequest(item._id, title, date);
+    await createReminderRequest(item._id, title, date, timezone);
     setNotice({ kind: 'success', message: t('reminderAdded') });
     await refresh();
   }, [refresh, t]);

@@ -23,6 +23,10 @@ export async function getReminder(userId, reminderId) {
   return reminder;
 }
 
+export async function getRemindersBeforeNow() {
+  return Reminder.find({ isSent: false, completed: { $ne: true }, reminderDate: { $lte: new Date() } });
+}
+
 export async function createReminder(userId, input) {
   await ensureOwnedItem(userId, input.itemId);
   return Reminder.create({ ...input, userId });
@@ -30,9 +34,15 @@ export async function createReminder(userId, input) {
 
 export async function updateReminder(userId, reminderId, input) {
   if (input.itemId) await ensureOwnedItem(userId, input.itemId);
+  const update = { ...input };
+  if (input.reminderDate) {
+    const current = await Reminder.findOne({ _id: reminderId, userId });
+    if (!current) throw new ApiError(404, 'Reminder not found');
+    if (current.reminderDate.getTime() !== input.reminderDate.getTime()) update.isSent = false;
+  }
   const reminder = await Reminder.findOneAndUpdate(
     { _id: reminderId, userId },
-    input,
+    update,
     { new: true, runValidators: true },
   ).populate('itemId', 'title type');
   if (!reminder) throw new ApiError(404, 'Reminder not found');

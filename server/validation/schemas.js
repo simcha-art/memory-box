@@ -21,6 +21,15 @@ const linkUrl = z.string().trim().max(2048).refine((value) => {
   }
 }, 'Enter a valid link starting with http:// or https://');
 
+const timeZoneSchema = z.string().trim().min(1).max(100).refine((value) => {
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: value });
+    return true;
+  } catch {
+    return false;
+  }
+}, 'Enter a valid IANA timezone');
+
 const itemBaseSchema = z.object({
   title: z.string().trim().min(1).max(160),
   description: z.string().trim().max(10000).optional(),
@@ -57,6 +66,7 @@ export const reminderSchema = z.object({
   itemId: z.string().regex(/^[a-f\d]{24}$/i),
   title: z.string().trim().min(1).max(160),
   reminderDate: z.coerce.date(),
+  timezone: timeZoneSchema.default('UTC'),
   completed: z.boolean().optional(),
 });
 

@@ -18,6 +18,7 @@ export function authenticate(request, _response, next) {
       throw new Error('Invalid token payload');
     }
     request.userId = payload.sub;
+    request.userEmail = payload.email;
     return next();
   } catch {
     return next(new ApiError(401, 'Invalid or expired token'));
