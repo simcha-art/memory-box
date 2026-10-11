@@ -3,6 +3,7 @@ import { Eye, EyeOff, FileUp, Plus, Wand2 } from 'lucide-react';
 import { Dialog } from '../../components/Dialog';
 import { usePreferences } from '../../stores/PreferencesStore';
 import { MAX_FILE_BYTES, acceptFor, fileAllowed, fileNameAllowed, formatLabelFor, inputKindFor } from '../../utils/fileRules';
+import { OTHER_CATEGORY_LABEL, categoryLabel, findCategoryName } from '../../utils/categories';
 import type { Category, ItemInput, ItemType, MemoryItem } from '../../types';
 
 function generatePassword(length = 20): string {
@@ -19,21 +20,32 @@ function generatePassword(length = 20): string {
 
 const itemTypes: ItemType[] = ['Document', 'Receipt', 'Note', 'Link', 'Image', 'Password'];
 
+// Value of the "Other…" option in the category select.
+const OTHER_CATEGORY = '__other__';
+
 export function ItemEditor({ item, categories, onClose, onSave }: {
   item?: MemoryItem;
   categories: Category[];
   onClose: () => void;
   onSave: (input: ItemInput, file?: File) => Promise<MemoryItem>;
 }) {
-  const { t } = usePreferences();
+  const { t, locale } = usePreferences();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [type, setType] = useState<ItemType>(item?.type || 'Document');
   const [fileError, setFileError] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [categoryChoice, setCategoryChoice] = useState(item?.category || '');
+  const [newCategory, setNewCategory] = useState('');
   const kind = inputKindFor(type);
   const staleFile = Boolean(item?.fileName && !fileNameAllowed(type, item.fileName));
+
+  const categoryNames = categories.map((category) => category.name);
+  // An existing item may use a category that is not in the list (e.g. an older one) — keep it selectable.
+  const categoryOptions = item?.category && !categoryNames.includes(item.category)
+    ? [...categoryNames, item.category]
+    : categoryNames;
 
   function changeType(next: ItemType) {
     setType(next);
@@ -58,13 +70,22 @@ export function ItemEditor({ item, categories, onClose, onSave }: {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+
+    let category = categoryChoice;
+    if (categoryChoice === OTHER_CATEGORY) {
+      const typed = newCategory.trim();
+      if (!typed) return setError(t('categoryName'));
+      // Reuse an existing category (fixed or custom) instead of creating a duplicate.
+      category = findCategoryName(typed, categoryNames) || typed;
+    }
+
     const input: ItemInput = {
       title: String(form.get('title') || '').trim(),
       description: String(form.get('description') || '').trim(),
       type,
       url: type === 'Link' || type === 'Password' ? String(form.get('url') || '').trim() : '',
       ...(type === 'Password' ? { username: String(form.get('username') || '').trim(), ...(password ? { password } : {}) } : {}),
-      category: String(form.get('category') || '').trim(),
+      category,
       tags: String(form.get('tags') || '').split(',').map((tag) => tag.trim()).filter(Boolean),
       date: String(form.get('date') || new Date().toISOString().slice(0, 10)),
     };
@@ -91,7 +112,16 @@ export function ItemEditor({ item, categories, onClose, onSave }: {
         <label>{t('type')}<select name="type" value={type} onChange={(event) => changeType(event.target.value as ItemType)}>{itemTypes.map((type) => <option key={type} value={type}>{t(type)}</option>)}</select></label>
         <label>{t('date')}<input name="date" type="date" defaultValue={item?.date?.slice(0, 10) || new Date().toISOString().slice(0, 10)} /></label>
       </div>
-      <label>{t('category')}<input name="category" list="category-options" defaultValue={item?.category} placeholder={t('categoryPlaceholder')} /><datalist id="category-options">{categories.map((category) => <option key={category._id} value={category.name} />)}</datalist></label>
+      <label>{t('category')}
+        <select name="category-choice" value={categoryChoice} onChange={(event) => setCategoryChoice(event.target.value)}>
+          <option value="">{t('noCategory')}</option>
+          {categoryOptions.map((name) => <option key={name} value={name}>{categoryLabel(name, locale)}</option>)}
+          <option value={OTHER_CATEGORY}>{OTHER_CATEGORY_LABEL[locale]}</option>
+        </select>
+      </label>
+      {categoryChoice === OTHER_CATEGORY && <label>{t('categoryName')}
+        <input name="new-category" value={newCategory} onChange={(event) => setNewCategory(event.target.value)} required maxLength={80} autoFocus placeholder={t('categoryPlaceholder')} />
+      </label>}
       <label>{t('tags')}<input name="tags" defaultValue={item?.tags.join(', ')} placeholder={t('tagsPlaceholder')} /><span className="field-hint">{t('tagsHint')}</span></label>
       <label>{t('description')}<textarea name="description" rows={4} maxLength={10000} defaultValue={item?.description} placeholder={t('descriptionPlaceholder')} /></label>
       {kind === 'link' && <label>{t('linkLabel')}<input name="url" type="url" required maxLength={2048} defaultValue={item?.url} placeholder={t('linkPlaceholder')} dir="ltr" pattern="https?://.+" /><span className="field-hint">{t('linkHint')}</span></label>}

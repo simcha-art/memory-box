@@ -8,6 +8,7 @@ import { useWorkspace } from '../stores/WorkspaceStore';
 import { usePreferences } from '../stores/PreferencesStore';
 import type { ItemType, MemoryItem } from '../types';
 import { useDateFormat } from '../hooks/useDateFormat';
+import { categoryLabel } from '../utils/categories';
 
 const itemTypes: ItemType[] = ['Document', 'Receipt', 'Note', 'Link', 'Image', 'Password'];
 
@@ -16,7 +17,7 @@ export function ItemsPage() {
   const navigate = useNavigate();
   const categoryFilter = searchParams.get('category') || '';
   const { items, searchResults, reminders, categories, loading, searching, search, saveItem } = useWorkspace();
-  const { t } = usePreferences();
+  const { t, locale } = usePreferences();
   const dateFormat = useDateFormat();
   const [query, setQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<ItemType | ''>('');
@@ -45,7 +46,7 @@ export function ItemsPage() {
       </select></label>
       <span className="sort-indicator"><ArrowDown size={15} />{t('recent')}</span>
     </div>
-    <div className="result-count"><span>{visibleItems.length} {t('results')}</span>{categoryFilter && <span>{categoryFilter}</span>}</div>
+    <div className="result-count"><span>{visibleItems.length} {t('results')}</span>{categoryFilter && <span>{categoryLabel(categoryFilter, locale)}</span>}</div>
     <div className="workspace-grid">
       <section className="item-list" aria-label={t('allSaved')} aria-busy={loading || searching}>
         {loading && !items.length ? <div className="empty-state"><span className="loading-spinner" />{t('loading')}</div>

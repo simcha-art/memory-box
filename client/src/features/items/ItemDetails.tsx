@@ -5,6 +5,7 @@ import { useDateFormat } from '../../hooks/useDateFormat';
 import { usePreferences } from '../../stores/PreferencesStore';
 import { useWorkspace } from '../../stores/WorkspaceStore';
 import type { ItemType, MemoryItem } from '../../types';
+import { categoryLabel } from '../../utils/categories';
 import { getReminderItemId } from '../../utils/reminders';
 
 const typeIcons = {
@@ -25,7 +26,7 @@ export function ItemDetails({ item, onClose, onEdit, onOpenRelated }: {
   onOpenRelated: (item: MemoryItem) => void;
 }) {
   const { reminders, deleteItem, addReminder, toggleReminder, deleteReminder, setError } = useWorkspace();
-  const { t } = usePreferences();
+  const { t, locale } = usePreferences();
   const dateFormat = useDateFormat();
   const [related, setRelated] = useState<MemoryItem[]>([]);
   const [reminderError, setReminderError] = useState('');
@@ -122,7 +123,7 @@ export function ItemDetails({ item, onClose, onEdit, onOpenRelated }: {
         </div>
       </header>
       <div className="detail-content">
-        <p className="eyebrow">{item.category || t('noCategory')} <span>·</span> {t(item.type)} · {dateFormat.format(new Date(item.date || item.updatedAt))}</p>
+        <p className="eyebrow">{item.category ? categoryLabel(item.category, locale) : t('noCategory')} <span>·</span> {t(item.type)} · {dateFormat.format(new Date(item.date || item.updatedAt))}</p>
         <h2>{item.title}</h2>
         {item.description && <p className="detail-description">{item.description}</p>}
         {item.type === 'Password' && <section className="secret-card" aria-label={t('Password')}>
@@ -150,7 +151,7 @@ export function ItemDetails({ item, onClose, onEdit, onOpenRelated }: {
           {related.length ? related.map((entry) => {
             const RelatedIcon = typeIcons[entry.type] || Archive;
             return <button className="related-item" key={entry._id} type="button" onClick={() => onOpenRelated(entry)}>
-              <span className={`item-type-icon small type-${entry.type.toLowerCase()}`}><RelatedIcon size={15} /></span><span className="related-copy"><strong>{entry.title}</strong><small>{entry.category || t(entry.type)}</small></span><ChevronRight size={16} />
+              <span className={`item-type-icon small type-${entry.type.toLowerCase()}`}><RelatedIcon size={15} /></span><span className="related-copy"><strong>{entry.title}</strong><small>{entry.category ? categoryLabel(entry.category, locale) : t(entry.type)}</small></span><ChevronRight size={16} />
             </button>;
           }) : <p className="empty-copy">{t('noRelated')}</p>}
         </section>
