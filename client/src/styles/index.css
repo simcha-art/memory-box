@@ -402,3 +402,8 @@ input::placeholder, textarea::placeholder { color: var(--subtle); }
 .secret-row + .secret-row { border-top: 1px solid var(--line); }
 .secret-label { flex: 0 0 38%; color: var(--muted); font-size: 12px; }
 .secret-value { flex: 1; min-width: 0; overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; font-weight: 500; }
+.tag-fields { display: grid; gap: 8px; }
+.tag-fields-label { font-size: 11px; font-weight: 600; }
+.tag-field-row { display: flex; align-items: center; gap: 6px; }
+.tag-field-row input { flex: 1; min-width: 0; }
+.add-tag-button { justify-self: start; }
