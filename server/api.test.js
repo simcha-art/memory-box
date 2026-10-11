@@ -67,6 +67,35 @@ describe('MemoryBox API', () => {
     expect(response.body.error).toMatch(/content does not match/i);
   });
 
+  it('adapts accepted input to the item type', async () => {
+    const account = await register('Types', `types-${Date.now()}@example.com`);
+    const api = asUser(account.token);
+
+    await api.post('/api/items').send({ type: 'Link', title: 'No url' }).expect(400);
+    await api.post('/api/items').send({ type: 'Link', title: 'Bad url', url: 'javascript:alert(1)' }).expect(400);
+    const link = await api.post('/api/items').send({ type: 'Link', title: 'Docs', url: 'https://example.com/a' }).expect(201);
+    expect(link.body.item.url).toBe('https://example.com/a');
+
+    const note = await api.post('/api/items').send({ type: 'Note', title: 'N', url: 'https://example.com' }).expect(201);
+    expect(note.body.item.url).toBe('');
+
+    const wrongForDocument = await api.post('/api/items')
+      .field('title', 'Pic as doc').field('type', 'Document')
+      .attach('file', Buffer.from('x'), { filename: 'a.png', contentType: 'image/png' });
+    expect(wrongForDocument.status).toBe(400);
+    expect(wrongForDocument.body.error).toMatch(/accept only/i);
+
+    const wrongForImage = await api.post('/api/items')
+      .field('title', 'Word as image').field('type', 'Image')
+      .attach('file', Buffer.from('x'), { filename: 'a.docx', contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    expect(wrongForImage.status).toBe(400);
+
+    const fileOnLink = await api.post('/api/items')
+      .field('title', 'File on link').field('type', 'Link').field('url', 'https://example.com')
+      .attach('file', Buffer.from('x'), { filename: 'a.pdf', contentType: 'application/pdf' });
+    expect(fileOnLink.status).toBe(400);
+  });
+
   it('requires a verified bearer token for user data', async () => {
     await request(app).get('/api/items').expect(401);
     await request(app).get('/api/auth/me').set('Authorization', 'Bearer invalid').expect(401);

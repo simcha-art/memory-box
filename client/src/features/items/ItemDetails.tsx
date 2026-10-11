@@ -82,6 +82,9 @@ export function ItemDetails({ item, onClose, onEdit, onOpenRelated }: {
         <p className="eyebrow">{item.category || t('noCategory')} <span>·</span> {t(item.type)} · {dateFormat.format(new Date(item.date || item.updatedAt))}</p>
         <h2>{item.title}</h2>
         {item.description && <p className="detail-description">{item.description}</p>}
+        {item.type === 'Link' && item.url && <a className="attachment-card" href={item.url} target="_blank" rel="noopener noreferrer">
+          <span className="attachment-icon"><LinkIcon size={18} /></span><span className="attachment-name"><strong dir="ltr">{item.url}</strong><small>{t('openLink')}</small></span><ChevronRight size={17} />
+        </a>}
         {item.fileName && <button className="attachment-card" type="button" onClick={() => void downloadItemFile(item).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : t('fileError')))}>
           <span className="attachment-icon"><Download size={18} /></span><span className="attachment-name"><strong>{item.fileName}</strong><small>{(item.fileSize / 1024 / 1024).toFixed(2)} MB</small></span><ChevronRight size={17} />
         </button>}

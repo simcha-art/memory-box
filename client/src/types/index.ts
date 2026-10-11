@@ -6,6 +6,7 @@ export type MemoryItem = {
   description: string;
   type: ItemType;
   category: string;
+  url: string;
   tags: string[];
   fileUrl: string;
   fileName: string;
@@ -24,4 +25,4 @@ export type Reminder = {
 
 export type MemoryUser = { id: string; name: string; email: string };
 export type Category = { _id: string; name: string };
-export type ItemInput = Pick<MemoryItem, 'title' | 'description' | 'type' | 'category' | 'tags' | 'date'>;
+export type ItemInput = Pick<MemoryItem, 'title' | 'description' | 'type' | 'category' | 'url' | 'tags' | 'date'>;

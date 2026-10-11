@@ -7,6 +7,7 @@ const itemSchema = new mongoose.Schema({
   type: { type: String, enum: ['Document', 'Receipt', 'Note', 'Link', 'Image'], required: true },
   category: { type: String, default: '', trim: true, maxlength: 80 },
   tags: { type: [String], default: [] },
+  url: { type: String, default: '', trim: true, maxlength: 2048 },
   fileUrl: { type: String, default: '' },
   fileName: { type: String, default: '' },
   fileSize: { type: Number, default: 0 },
