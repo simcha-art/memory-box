@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { create, download, get, list, related, remove, search, update } from '../controllers/itemController.js';
+import { create, download, get, list, related, remove, search, secret, update } from '../controllers/itemController.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { uploadSingleFile } from '../middleware/upload.js';
 
@@ -9,6 +9,7 @@ router.use(authenticate);
 router.get('/search', search);
 router.get('/:id/related', related);
 router.get('/:id/file', download);
+router.get('/:id/secret', secret);
 router.get('/', list);
 router.post('/', uploadSingleFile, create);
 router.get('/:id', get);

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const itemTypes = ['Document', 'Receipt', 'Note', 'Link', 'Image'];
+const itemTypes = ['Document', 'Receipt', 'Note', 'Link', 'Image', 'Password'];
 
 export const registerSchema = z.object({
   name: z.string().trim().min(1).max(80),
@@ -26,15 +26,23 @@ const itemBaseSchema = z.object({
   description: z.string().trim().max(10000).optional(),
   type: z.enum(itemTypes),
   url: linkUrl.or(z.literal('')).optional(),
+  username: z.string().trim().max(200).optional(),
+  // Deliberately not trimmed: passwords may legitimately start or end with spaces.
+  password: z.string().max(512).optional(),
   category: z.string().trim().max(80).optional(),
   tags: z.array(z.string().trim().min(1).max(40)).max(30).optional(),
   date: z.coerce.date().optional(),
 });
 
-export const itemSchema = itemBaseSchema.refine((value) => value.type !== 'Link' || Boolean(value.url), {
-  message: 'A link is required for items of type Link',
-  path: ['url'],
-});
+export const itemSchema = itemBaseSchema
+  .refine((value) => value.type !== 'Link' || Boolean(value.url), {
+    message: 'A link is required for items of type Link',
+    path: ['url'],
+  })
+  .refine((value) => value.type !== 'Password' || Boolean(value.password), {
+    message: 'A password is required for items of type Password',
+    path: ['password'],
+  });
 
 export const itemUpdateSchema = itemBaseSchema.partial().refine((value) => Object.keys(value).length > 0, {
   message: 'At least one item field is required',

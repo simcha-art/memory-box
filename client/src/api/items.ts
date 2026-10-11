@@ -16,6 +16,7 @@ export async function getRelatedItems(id: string): Promise<MemoryItem[]> {
 export async function saveItem(input: ItemInput, file: File | undefined, existingItem?: MemoryItem): Promise<MemoryItem> {
   const form = new FormData();
   Object.entries({ ...input, tags: input.tags.join(',') }).forEach(([key, value]) => {
+    if (value === undefined) return;
     form.append(key, String(value));
   });
   if (file) form.append('file', file);
@@ -25,6 +26,10 @@ export async function saveItem(input: ItemInput, file: File | undefined, existin
     body: form,
   });
   return result.item;
+}
+
+export async function revealItemPassword(id: string): Promise<string> {
+  return (await request<{ password: string }>(`/items/${id}/secret`)).password;
 }
 
 export async function removeItem(id: string): Promise<void> {

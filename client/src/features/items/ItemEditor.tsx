@@ -1,11 +1,23 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
-import { FileUp, Plus } from 'lucide-react';
+import { Eye, EyeOff, FileUp, Plus, Wand2 } from 'lucide-react';
 import { Dialog } from '../../components/Dialog';
 import { usePreferences } from '../../stores/PreferencesStore';
 import { MAX_FILE_BYTES, acceptFor, fileAllowed, fileNameAllowed, formatLabelFor, inputKindFor } from '../../utils/fileRules';
 import type { Category, ItemInput, ItemType, MemoryItem } from '../../types';
 
-const itemTypes: ItemType[] = ['Document', 'Receipt', 'Note', 'Link', 'Image'];
+function generatePassword(length = 20): string {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*-_=+';
+  const limit = Math.floor(256 / alphabet.length) * alphabet.length; // avoid modulo bias
+  let result = '';
+  while (result.length < length) {
+    for (const byte of crypto.getRandomValues(new Uint8Array(length * 2))) {
+      if (byte < limit && result.length < length) result += alphabet[byte % alphabet.length];
+    }
+  }
+  return result;
+}
+
+const itemTypes: ItemType[] = ['Document', 'Receipt', 'Note', 'Link', 'Image', 'Password'];
 
 export function ItemEditor({ item, categories, onClose, onSave }: {
   item?: MemoryItem;
@@ -18,6 +30,8 @@ export function ItemEditor({ item, categories, onClose, onSave }: {
   const [error, setError] = useState('');
   const [type, setType] = useState<ItemType>(item?.type || 'Document');
   const [fileError, setFileError] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const kind = inputKindFor(type);
   const staleFile = Boolean(item?.fileName && !fileNameAllowed(type, item.fileName));
 
@@ -48,11 +62,13 @@ export function ItemEditor({ item, categories, onClose, onSave }: {
       title: String(form.get('title') || '').trim(),
       description: String(form.get('description') || '').trim(),
       type,
-      url: type === 'Link' ? String(form.get('url') || '').trim() : '',
+      url: type === 'Link' || type === 'Password' ? String(form.get('url') || '').trim() : '',
+      ...(type === 'Password' ? { username: String(form.get('username') || '').trim(), ...(password ? { password } : {}) } : {}),
       category: String(form.get('category') || '').trim(),
       tags: String(form.get('tags') || '').split(',').map((tag) => tag.trim()).filter(Boolean),
       date: String(form.get('date') || new Date().toISOString().slice(0, 10)),
     };
+    if (type === 'Password' && !password && !item?.hasPassword) return setError(t('passwordRequired'));
     const selectedFile = form.get('file');
     const file = kind === 'file' && selectedFile instanceof File && selectedFile.size > 0 ? selectedFile : undefined;
     if (file && (!fileAllowed(type, file) || file.size > MAX_FILE_BYTES)) return;
@@ -80,6 +96,18 @@ export function ItemEditor({ item, categories, onClose, onSave }: {
       <label>{t('description')}<textarea name="description" rows={4} maxLength={10000} defaultValue={item?.description} placeholder={t('descriptionPlaceholder')} /></label>
       {kind === 'link' && <label>{t('linkLabel')}<input name="url" type="url" required maxLength={2048} defaultValue={item?.url} placeholder={t('linkPlaceholder')} dir="ltr" pattern="https?://.+" /><span className="field-hint">{t('linkHint')}</span></label>}
       {kind === 'none' && <p className="field-hint">{t('noteHint')}</p>}
+      {kind === 'password' && <>
+        <label>{t('username')}<input name="username" maxLength={200} defaultValue={item?.username} placeholder={t('usernamePlaceholder')} dir="ltr" autoComplete="off" /></label>
+        <label>{t('passwordField')}
+          <span className="secret-input">
+            <input name="password-value" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} maxLength={512} dir="ltr" autoComplete="new-password" placeholder={item?.hasPassword ? t('passwordKeepPlaceholder') : ''} />
+            <button className="icon-button icon-button-small" type="button" title={showPassword ? t('hidePassword') : t('showPassword')} aria-label={showPassword ? t('hidePassword') : t('showPassword')} onClick={() => setShowPassword((current) => !current)}>{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button>
+            <button className="icon-button icon-button-small" type="button" title={t('generatePassword')} aria-label={t('generatePassword')} onClick={() => { setPassword(generatePassword()); setShowPassword(true); }}><Wand2 size={16} /></button>
+          </span>
+          <span className="field-hint">{t('passwordEncryptedHint')}</span>
+        </label>
+        <label>{t('websiteLabel')}<input name="url" type="url" maxLength={2048} defaultValue={item?.url} placeholder={t('linkPlaceholder')} dir="ltr" pattern="https?://.+" /></label>
+      </>}
       {kind === 'file' && <>
         <label className={`file-control ${fileError ? 'is-invalid' : ''}`}><span className="file-control-icon"><FileUp size={19} /></span><span className="file-control-copy"><strong>{item?.fileName && !staleFile ? item.fileName : t('attachment')}</strong><small>{t('fileAccepts')}: {formatLabelFor(type)} · {t('fileHint')}</small></span><input key={type} name="file" type="file" accept={acceptFor(type)} onChange={checkFile} /></label>
         {fileError && <p className="form-error" role="alert">{fileError}</p>}
