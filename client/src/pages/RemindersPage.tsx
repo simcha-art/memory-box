@@ -11,7 +11,7 @@ import { getReminderItemId, isSameDay } from '../utils/reminders';
 import { useDateFormat } from '../hooks/useDateFormat';
 
 export function RemindersPage() {
-  const { reminders, items, categories, toggleReminder, saveItem } = useWorkspace();
+  const { reminders, items, categories, toggleReminder, deleteReminder, saveItem } = useWorkspace();
   const { t } = usePreferences();
   const dateFormat = useDateFormat();
   const [selectedDate, setSelectedDate] = useState(() => new Date());
@@ -39,12 +39,12 @@ export function RemindersPage() {
     <ReminderCalendar reminders={reminders} selectedDate={selectedDate} onSelectDate={setSelectedDate} />
     <h2 className="selected-day-title">{t('remindersOnDay')} {dateFormat.format(selectedDate)}</h2>
     <section className="reminders-list" aria-label={t('reminders')}>
-      {dayReminders.length ? dayReminders.map((reminder) => <ReminderRow key={reminder._id} reminder={reminder} onToggle={() => void toggleReminder(reminder)} onOpen={() => openItem(reminder)} />)
+      {dayReminders.length ? dayReminders.map((reminder) => <ReminderRow key={reminder._id} reminder={reminder} onToggle={() => void toggleReminder(reminder)} onOpen={() => openItem(reminder)} onDelete={() => void deleteReminder(reminder)} />)
         : <div className="empty-state compact"><span className="empty-state-icon"><Bell size={21} /></span><h2>{reminders.length ? t('noRemindersDay') : t('noReminders')}</h2>{!reminders.length && <p>{t('reminderHint')}</p>}</div>}
     </section>
     <h2 className="selected-day-title">{t('allUpcoming')}</h2>
     <section className="reminders-list" aria-label={t('allUpcoming')}>
-      {upcomingReminders.length ? upcomingReminders.map((reminder) => <ReminderRow key={reminder._id} reminder={reminder} onToggle={() => void toggleReminder(reminder)} onOpen={() => openItem(reminder)} />)
+      {upcomingReminders.length ? upcomingReminders.map((reminder) => <ReminderRow key={reminder._id} reminder={reminder} onToggle={() => void toggleReminder(reminder)} onOpen={() => openItem(reminder)} onDelete={() => void deleteReminder(reminder)} />)
         : <div className="empty-state compact"><span className="empty-state-icon"><Bell size={21} /></span><h2>{t('noUpcoming')}</h2></div>}
     </section>
     {selected && <ItemDetails item={selected} onClose={() => setSelected(null)} onEdit={() => { setEditing(selected); setSelected(null); }} onOpenRelated={setSelected} />}

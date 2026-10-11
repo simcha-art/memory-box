@@ -18,3 +18,7 @@ export async function setReminderCompleted(reminder: Reminder): Promise<void> {
     body: JSON.stringify({ completed: !reminder.completed }),
   });
 }
+
+export async function deleteReminder(reminderId: string): Promise<void> {
+  await request(`/reminders/${reminderId}`, { method: 'DELETE' });
+}
