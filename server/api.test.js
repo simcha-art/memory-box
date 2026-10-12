@@ -1,22 +1,34 @@
 import mongoose from 'mongoose';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import app from './app.js';
 import { connectDatabase } from './config/database.js';
 import Reminder from './models/Reminder.js';
+import User from './models/User.js';
 import { getRemindersBeforeNow } from './services/reminderService.js';
+import { sendVerificationEmail } from './services/verificationEmail.js';
+
+vi.mock('./services/verificationEmail.js', () => ({
+  sendVerificationEmail: vi.fn(),
+}));
 
 let mongo;
 
 async function register(name, email) {
+  const password = 'correct-horse-42';
   const response = await request(app).post('/api/auth/register').send({
     name,
     email,
-    password: 'correct-horse-42',
+    password,
   });
   expect(response.status).toBe(201);
-  return response.body;
+  expect(response.body.token).toBeUndefined();
+
+  await User.updateOne({ email }, { emailVerified: true });
+  const login = await request(app).post('/api/auth/login').send({ email, password });
+  expect(login.status).toBe(200);
+  return login.body;
 }
 
 async function addItem(token, input) {
@@ -58,6 +70,39 @@ describe('MemoryBox API', () => {
     }).expect(400);
   });
 
+  it('requires email verification before the first sign-in', async () => {
+    const email = `verify-${Date.now()}@example.com`;
+    const password = 'correct-horse-42';
+
+    const created = await request(app).post('/api/auth/register')
+      .send({ name: 'Vera', email, password }).expect(201);
+    expect(created.body.requiresVerification).toBe(true);
+    expect(created.body.token).toBeUndefined();
+
+    const blocked = await request(app).post('/api/auth/login').send({ email, password }).expect(403);
+    expect(blocked.body.code).toBe('EMAIL_NOT_VERIFIED');
+
+    const { token } = sendVerificationEmail.mock.calls.at(-1)[0];
+    expect(token).toBeTruthy();
+
+    const callsBeforeResend = sendVerificationEmail.mock.calls.length;
+    await request(app).post('/api/auth/resend-verification').send({ email }).expect(200);
+    expect(sendVerificationEmail.mock.calls.length).toBe(callsBeforeResend);
+
+    await request(app).post('/api/auth/verify-email').send({ token: 'wrong-token' }).expect(400);
+    const verified = await request(app).post('/api/auth/verify-email').send({ token }).expect(200);
+    expect(verified.body.token).toBeTruthy();
+    expect(verified.body.user.email).toBe(email);
+
+    await request(app).post('/api/auth/verify-email').send({ token }).expect(400);
+    await request(app).post('/api/auth/login').send({ email, password }).expect(200);
+  });
+
+  it('does not reveal whether an account exists when resending verification', async () => {
+    await request(app).post('/api/auth/resend-verification')
+      .send({ email: `nobody-${Date.now()}@example.com` }).expect(200);
+  });
+
   it('rejects file bodies that do not match an allowed upload MIME type', async () => {
     const account = await register('Upload', `upload-${Date.now()}@example.com`);
     const response = await asUser(account.token)
@@ -67,6 +112,49 @@ describe('MemoryBox API', () => {
       .attach('file', Buffer.from('not a png'), { filename: 'fake.png', contentType: 'image/png' });
     expect(response.status).toBe(400);
     expect(response.body.error).toMatch(/content does not match/i);
+  });
+
+  it('stores saved passwords encrypted and reveals them only to the owner', async () => {
+    const owner = await register('Vault', `vault-${Date.now()}@example.com`);
+    const other = await register('Other', `other-${Date.now()}@example.com`);
+
+    const created = await asUser(owner.token).post('/api/items').send({
+      type: 'Password', title: 'Bank', username: 'ada', password: 'S3cret!pass', url: 'https://bank.example.com',
+    });
+    expect(created.status).toBe(201);
+    expect(created.body.item.type).toBe('Password');
+    expect(created.body.item.username).toBe('ada');
+    expect(created.body.item.hasPassword).toBe(true);
+    expect(created.body.item.passwordEnc).toBeUndefined();
+    expect(JSON.stringify(created.body)).not.toContain('S3cret!pass');
+
+    const id = created.body.item._id;
+    const list = await asUser(owner.token).get('/api/items');
+    expect(JSON.stringify(list.body)).not.toContain('S3cret!pass');
+
+    const revealed = await asUser(owner.token).get(`/api/items/${id}/secret`);
+    expect(revealed.status).toBe(200);
+    expect(revealed.body.password).toBe('S3cret!pass');
+    expect(revealed.headers['cache-control']).toMatch(/no-store/);
+
+    await asUser(other.token).get(`/api/items/${id}/secret`).expect(404);
+  });
+
+  it('requires a password for Password items and clears it when the type changes', async () => {
+    const account = await register('Switch', `switch-${Date.now()}@example.com`);
+    const api = asUser(account.token);
+
+    await api.post('/api/items').send({ type: 'Password', title: 'No pass', username: 'x' }).expect(400);
+
+    const created = await api.post('/api/items').send({ type: 'Password', title: 'Site', password: 'abc12345' });
+    expect(created.status).toBe(201);
+    const id = created.body.item._id;
+
+    const changed = await api.patch(`/api/items/${id}`).send({ type: 'Note' });
+    expect(changed.status).toBe(200);
+    expect(changed.body.item.hasPassword).toBe(false);
+    expect(changed.body.item.username).toBe('');
+    await api.get(`/api/items/${id}/secret`).expect(404);
   });
 
   it('adapts accepted input to the item type', async () => {

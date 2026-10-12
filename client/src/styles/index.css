@@ -942,6 +942,16 @@ label {
   line-height: 1.5;
 }
 
+.notice-popup {
+  position: fixed;
+  top: 1rem;
+  left: 50%;
+  z-index: 2000;
+  width: min(32rem, calc(100vw - 2rem));
+  margin: 0;
+  transform: translateX(-50%);
+}
+
 .notice-error {
   color: var(--danger);
   background: var(--danger-wash);
@@ -2674,4 +2684,28 @@ label {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ===== Auth password field: same size as other fields, eye inside ===== */
+.auth-form .password-field {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.auth-form .password-field>input {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding-inline-end: 3.2rem;
+}
+
+.auth-form .password-field>.icon-button {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-end: 0.4rem;
+  margin: 0;
+  transform: translateY(-50%);
+  z-index: 1;
 }

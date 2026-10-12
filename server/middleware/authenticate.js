@@ -23,8 +23,13 @@ export async function authenticate(request, _response, next) {
     return next(new ApiError(401, 'Invalid or expired token'));
   }
 
-  const user = await User.findById(payload.sub).select('role disabled').catch(() => null);
+  const user = await User.findById(payload.sub).select('role disabled passwordChangedAt').catch(() => null);
   if (!user || user.disabled) {
+    return next(new ApiError(401, 'Invalid or expired token'));
+  }
+
+  if (user.passwordChangedAt && typeof payload.iat === 'number'
+    && payload.iat < Math.floor(user.passwordChangedAt.getTime() / 1000)) {
     return next(new ApiError(401, 'Invalid or expired token'));
   }
 

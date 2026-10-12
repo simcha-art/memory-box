@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import nodemailer from "nodemailer";
 import { getRemindersBeforeNow } from "./reminderService.js";
+import { nextOccurrence } from "../utils/recurrence.js";
 
 function hasEmailConfig(env) {
     return Boolean(env.EMAIL_USER?.trim() && env.EMAIL_PASS?.trim());
@@ -29,14 +30,14 @@ function getTimeZone(value) {
     }
 }
 
-export function formatReminderEmail(reminder) {
+export function formatReminderEmail(reminder, clientUrl = process.env.CLIENT_URL || "http://localhost:5173") {
     const date = new Date(reminder.reminderDate);
-    const formattedDate = date.toLocaleString("he-IL", {
+    const formattedDate = date.toLocaleString("en-US", {
         dateStyle: "full",
         timeStyle: "short",
         timeZone: getTimeZone(reminder.timezone || "UTC"),
     });
-    const title = escapeHtml(reminder.title);
+    const title = String(reminder.title ?? "");
 
     return {
         subject: `Reminder: ${reminder.title}`,
@@ -122,7 +123,7 @@ export function formatReminderEmail(reminder) {
 
         <!-- Action button -->
         <div style="margin-bottom: 12px;">
-          <a href="${escapeHtml("http://localhost:5173/reminders")}"
+          <a href="${escapeHtml(`${clientUrl.replace(/\/+$/, "")}/reminders`)}"
              target="_blank"
              style="
                display: inline-block;
@@ -172,7 +173,13 @@ export async function sendDueReminders({
     for (const reminder of reminders) {
         try {
             await sendEmail(reminder);
-            reminder.isSent = true;
+            const next = nextOccurrence(reminder);
+            if (next) {
+                reminder.reminderDate = next;
+                reminder.isSent = false;
+            } else {
+                reminder.isSent = true;
+            }
             await reminder.save();
             sent += 1;
         } catch (error) {
