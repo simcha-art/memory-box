@@ -1,12 +1,35 @@
-import { createContext, useCallback, useContext, useDeferredValue, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { createCategory as createCategoryRequest, listCategories } from '../api/categories';
-import { listItems, removeItem, saveItem as saveItemRequest, searchItems } from '../api/items';
-import { createReminder as createReminderRequest, deleteReminder as deleteReminderRequest, listReminders, setReminderCompleted } from '../api/reminders';
-import type { Category, ItemInput, MemoryItem, Reminder } from '../types';
-import { useAuth } from '../features/auth/AuthContext';
-import { usePreferences } from './PreferencesStore';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import {
+  createCategory as createCategoryRequest,
+  deleteCategory as deleteCategoryRequest,
+  listCategories,
+} from "../api/categories";
+import {
+  listItems,
+  removeItem,
+  saveItem as saveItemRequest,
+  searchItems,
+} from "../api/items";
+import {
+  createReminder as createReminderRequest,
+  deleteReminder as deleteReminderRequest,
+  listReminders,
+  setReminderCompleted,
+} from "../api/reminders";
+import type { Category, ItemInput, MemoryItem, Reminder } from "../types";
+import { useAuth } from "../features/auth/AuthContext";
+import { usePreferences } from "./PreferencesStore";
 
-type Notice = { kind: 'success' | 'error'; message: string } | null;
+type Notice = { kind: "success" | "error"; message: string } | null;
 type WorkspaceValue = {
   items: MemoryItem[];
   searchResults: MemoryItem[] | null;
@@ -21,10 +44,20 @@ type WorkspaceValue = {
   setNotice: (notice: Notice) => void;
   refresh: () => Promise<void>;
   search: (query: string) => void;
-  saveItem: (input: ItemInput, file?: File, existingItem?: MemoryItem) => Promise<MemoryItem>;
+  saveItem: (
+    input: ItemInput,
+    file?: File,
+    existingItem?: MemoryItem,
+  ) => Promise<MemoryItem>;
   deleteItem: (item: MemoryItem) => Promise<void>;
   addCategory: (name: string) => Promise<Category>;
-  addReminder: (item: MemoryItem, title: string, date: string, timezone: string) => Promise<void>;
+  removeCategory: (category: Category) => Promise<void>;
+  addReminder: (
+    item: MemoryItem,
+    title: string,
+    date: string,
+    timezone: string,
+  ) => Promise<void>;
   toggleReminder: (reminder: Reminder) => Promise<void>;
   deleteReminder: (reminder: Reminder) => Promise<void>;
 };
@@ -40,15 +73,15 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [searching, setSearching] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [notice, setNotice] = useState<Notice>(null);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [searchRevision, setSearchRevision] = useState(0);
   const deferredQuery = useDeferredValue(query.trim());
 
   const refresh = useCallback(async () => {
     setLoading(true);
-    setError('');
+    setError("");
     try {
       const [nextItems, nextReminders, nextCategories] = await Promise.all([
         listItems(),
@@ -61,7 +94,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       setSearchResults(null);
       setSearchRevision((revision) => revision + 1);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : t('loadError'));
+      setError(reason instanceof Error ? reason.message : t("loadError"));
     } finally {
       setLoading(false);
     }
@@ -84,7 +117,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         if (!cancelled) setSearchResults(result);
       })
       .catch((reason: unknown) => {
-        if (!cancelled) setError(reason instanceof Error ? reason.message : t('loadError'));
+        if (!cancelled)
+          setError(reason instanceof Error ? reason.message : t("loadError"));
       })
       .finally(() => {
         if (!cancelled) setSearching(false);
@@ -96,94 +130,166 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const search = useCallback((value: string) => setQuery(value), []);
 
-  const saveItem = useCallback(async (input: ItemInput, file?: File, existingItem?: MemoryItem) => {
-    setError('');
-    const savedItem = await saveItemRequest(input, file, existingItem);
-    let categoryFailure = '';
-    if (input.category && !categories.some((category) => category.name.toLowerCase() === input.category.toLowerCase())) {
-      try {
-        const category = await createCategoryRequest(input.category);
-        setCategories((current) => [...current, category].sort((left, right) => left.name.localeCompare(right.name)));
-      } catch (reason: unknown) {
-        categoryFailure = reason instanceof Error ? reason.message : t('categorySaveError');
+  const saveItem = useCallback(
+    async (input: ItemInput, file?: File, existingItem?: MemoryItem) => {
+      setError("");
+      const savedItem = await saveItemRequest(input, file, existingItem);
+      let categoryFailure = "";
+      if (
+        input.category &&
+        !categories.some(
+          (category) =>
+            category.name.toLowerCase() === input.category.toLowerCase(),
+        )
+      ) {
+        try {
+          const category = await createCategoryRequest(input.category);
+          setCategories((current) =>
+            [...current, category].sort((left, right) =>
+              left.name.localeCompare(right.name),
+            ),
+          );
+        } catch (reason: unknown) {
+          categoryFailure =
+            reason instanceof Error ? reason.message : t("categorySaveError");
+        }
       }
-    }
-    await refresh();
-    setNotice(categoryFailure
-      ? { kind: 'error', message: `${t('categorySaveError')} ${categoryFailure}` }
-      : { kind: 'success', message: t(existingItem ? 'updated' : 'saved') });
-    return savedItem;
-  }, [categories, refresh, t]);
+      await refresh();
+      setNotice(
+        categoryFailure
+          ? {
+              kind: "error",
+              message: `${t("categorySaveError")} ${categoryFailure}`,
+            }
+          : { kind: "success", message: t(existingItem ? "updated" : "saved") },
+      );
+      return savedItem;
+    },
+    [categories, refresh, t],
+  );
 
-  const deleteItem = useCallback(async (item: MemoryItem) => {
-    setError('');
-    await removeItem(item._id);
-    setNotice({ kind: 'success', message: t('deleted') });
-    await refresh();
-  }, [refresh, t]);
+  const deleteItem = useCallback(
+    async (item: MemoryItem) => {
+      setError("");
+      await removeItem(item._id);
+      setNotice({ kind: "success", message: t("deleted") });
+      await refresh();
+    },
+    [refresh, t],
+  );
 
   const addCategory = useCallback(async (name: string) => {
-    setError('');
+    setError("");
     const category = await createCategoryRequest(name);
-    setCategories((current) => [...current, category].sort((left, right) => left.name.localeCompare(right.name)));
+    setCategories((current) =>
+      [...current, category].sort((left, right) =>
+        left.name.localeCompare(right.name),
+      ),
+    );
     return category;
   }, []);
 
-  const addReminder = useCallback(async (item: MemoryItem, title: string, date: string, timezone: string) => {
-    setError('');
-    await createReminderRequest(item._id, title, date, timezone);
-    setNotice({ kind: 'success', message: t('reminderAdded') });
-    await refresh();
-  }, [refresh, t]);
-
-  const toggleReminder = useCallback(async (reminder: Reminder) => {
-    setError('');
-    try {
-      await setReminderCompleted(reminder);
+  const removeCategory = useCallback(
+    async (category: Category) => {
+      setError("");
+      await deleteCategoryRequest(category._id);
+      setNotice({ kind: "success", message: t("categoryDeleted") });
       await refresh();
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : t('reminderError'));
-    }
-  }, [refresh, t]);
+    },
+    [refresh, t],
+  );
 
-  const deleteReminder = useCallback(async (reminder: Reminder) => {
-    setError('');
-    try {
-      await deleteReminderRequest(reminder._id);
-      setNotice({ kind: 'success', message: t('reminderDeleted') });
+  const addReminder = useCallback(
+    async (item: MemoryItem, title: string, date: string, timezone: string) => {
+      setError("");
+      await createReminderRequest(item._id, title, date, timezone);
+      setNotice({ kind: "success", message: t("reminderAdded") });
       await refresh();
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : t('reminderError'));
-    }
-  }, [refresh, t]);
+    },
+    [refresh, t],
+  );
 
-  const value = useMemo<WorkspaceValue>(() => ({
-    items,
-    searchResults,
-    reminders,
-    categories,
-    loading,
-    searching,
-    error,
-    notice,
-    setError,
-    dismissNotice: () => setNotice(null),
-    setNotice,
-    refresh,
-    search,
-    saveItem,
-    deleteItem,
-    addCategory,
-    addReminder,
-    toggleReminder,
-    deleteReminder,
-  }), [items, searchResults, reminders, categories, loading, searching, error, notice, refresh, search, saveItem, deleteItem, addCategory, addReminder, toggleReminder, deleteReminder]);
+  const toggleReminder = useCallback(
+    async (reminder: Reminder) => {
+      setError("");
+      try {
+        await setReminderCompleted(reminder);
+        await refresh();
+      } catch (reason) {
+        setError(reason instanceof Error ? reason.message : t("reminderError"));
+      }
+    },
+    [refresh, t],
+  );
 
-  return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;
+  const deleteReminder = useCallback(
+    async (reminder: Reminder) => {
+      setError("");
+      try {
+        await deleteReminderRequest(reminder._id);
+        setNotice({ kind: "success", message: t("reminderDeleted") });
+        await refresh();
+      } catch (reason) {
+        setError(reason instanceof Error ? reason.message : t("reminderError"));
+      }
+    },
+    [refresh, t],
+  );
+
+  const value = useMemo<WorkspaceValue>(
+    () => ({
+      items,
+      searchResults,
+      reminders,
+      categories,
+      loading,
+      searching,
+      error,
+      notice,
+      setError,
+      dismissNotice: () => setNotice(null),
+      setNotice,
+      refresh,
+      search,
+      saveItem,
+      deleteItem,
+      addCategory,
+      removeCategory,
+      addReminder,
+      toggleReminder,
+      deleteReminder,
+    }),
+    [
+      items,
+      searchResults,
+      reminders,
+      categories,
+      loading,
+      searching,
+      error,
+      notice,
+      refresh,
+      search,
+      saveItem,
+      deleteItem,
+      addCategory,
+      removeCategory,
+      addReminder,
+      toggleReminder,
+      deleteReminder,
+    ],
+  );
+
+  return (
+    <WorkspaceContext.Provider value={value}>
+      {children}
+    </WorkspaceContext.Provider>
+  );
 }
 
 export function useWorkspace() {
   const value = useContext(WorkspaceContext);
-  if (!value) throw new Error('useWorkspace must be used inside WorkspaceProvider');
+  if (!value)
+    throw new Error("useWorkspace must be used inside WorkspaceProvider");
   return value;
 }

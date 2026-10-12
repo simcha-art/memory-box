@@ -26,8 +26,10 @@ export type Reminder = {
   completed: boolean;
 };
 
-export type MemoryUser = { id: string; name: string; email: string };
-export type Category = { _id: string; name: string };
+export type UserRole = 'user' | 'admin';
+export type MemoryUser = { id: string; name: string; email: string; role: UserRole };
+export type AdminUser = MemoryUser & { disabled: boolean; itemCount: number; createdAt: string };
+export type Category = { _id: string; name: string; isDefault?: boolean };
 export type ItemInput = Pick<MemoryItem, 'title' | 'description' | 'type' | 'category' | 'url' | 'tags' | 'date'> & {
   username?: string;
   password?: string;

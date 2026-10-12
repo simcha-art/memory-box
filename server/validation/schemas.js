@@ -77,3 +77,10 @@ export const reminderUpdateSchema = reminderSchema.partial().refine((value) => O
 export const categorySchema = z.object({
   name: z.string().trim().min(1).max(80),
 });
+
+export const adminUserUpdateSchema = z.object({
+  role: z.enum(['user', 'admin']).optional(),
+  disabled: z.boolean().optional(),
+}).refine((value) => Object.keys(value).length > 0, {
+  message: 'At least one user field is required',
+});

@@ -11,3 +11,7 @@ export async function createCategory(name: string): Promise<Category> {
     body: JSON.stringify({ name }),
   })).category;
 }
+
+export async function deleteCategory(id: string): Promise<void> {
+  await request<void>(`/categories/${id}`, { method: 'DELETE' });
+}

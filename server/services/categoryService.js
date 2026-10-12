@@ -69,4 +69,5 @@ export async function deleteCategory(userId, categoryId) {
   const current = await getCategory(userId, categoryId);
   if (current.isDefault) throw new ApiError(403, 'Fixed categories cannot be deleted');
   await Category.findOneAndDelete({ _id: categoryId, userId });
+  await Item.updateMany({ userId, category: current.name }, { category: '' });
 }

@@ -1,0 +1,58 @@
+.category-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.category-row .category-link {
+    flex: 1;
+    min-width: 0;
+}
+
+.category-delete {
+    position: absolute;
+    inset-inline-end: 0.35rem;
+    width: 1.8rem;
+    height: 1.8rem;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: var(--r);
+    color: var(--spine-dim);
+    background: transparent;
+    opacity: 0;
+    transition: opacity 0.12s ease, color 0.12s ease, background-color 0.12s ease;
+}
+
+.category-row:hover .category-delete,
+.category-delete:focus-visible {
+    opacity: 1;
+}
+
+.category-delete:hover {
+    color: var(--hot);
+    background: rgba(242, 234, 217, 0.08);
+}
+
+@media (hover: none) {
+    .category-delete {
+        opacity: 0.7;
+    }
+}
+
+.mobile-chip-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.15rem;
+}
+
+.mobile-chip-delete {
+    width: 1.5rem;
+    height: 1.5rem;
+    display: inline-grid;
+    place-items: center;
+    border: 0;
+    color: inherit;
+    background: transparent;
+    opacity: 0.7;
+}
