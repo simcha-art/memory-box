@@ -10,6 +10,8 @@ export const verificationMessages = {
     verifying: 'Verifying your email…',
     verifyFailedTitle: 'Verification failed',
     verifyFailedBody: 'This link is invalid or has expired. Sign in to request a new one.',
+    confirmPassword: 'Confirm password',
+    passwordsMismatch: 'The passwords do not match.',
   },
   he: {
     checkInboxTitle: 'בדקו את תיבת הדואר',
@@ -22,5 +24,7 @@ export const verificationMessages = {
     verifying: 'מאמתים את המייל…',
     verifyFailedTitle: 'האימות נכשל',
     verifyFailedBody: 'הקישור אינו תקין או שפג תוקפו. היכנסו כדי לקבל קישור חדש.',
+    confirmPassword: 'אימות סיסמה',
+    passwordsMismatch: 'הסיסמאות אינן תואמות.',
   },
 };

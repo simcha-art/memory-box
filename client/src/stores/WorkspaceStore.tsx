@@ -25,7 +25,13 @@ import {
   listReminders,
   setReminderCompleted,
 } from "../api/reminders";
-import type { Category, ItemInput, MemoryItem, Reminder } from "../types";
+import type {
+  Category,
+  ItemInput,
+  MemoryItem,
+  Reminder,
+  RepeatType,
+} from "../types";
 import { useAuth } from "../features/auth/AuthContext";
 import { usePreferences } from "./PreferencesStore";
 
@@ -57,6 +63,7 @@ type WorkspaceValue = {
     title: string,
     date: string,
     timezone: string,
+    repeat: RepeatType,
   ) => Promise<void>;
   toggleReminder: (reminder: Reminder) => Promise<void>;
   deleteReminder: (reminder: Reminder) => Promise<void>;
@@ -200,9 +207,15 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   );
 
   const addReminder = useCallback(
-    async (item: MemoryItem, title: string, date: string, timezone: string) => {
+    async (
+      item: MemoryItem,
+      title: string,
+      date: string,
+      timezone: string,
+      repeat: RepeatType,
+    ) => {
       setError("");
-      await createReminderRequest(item._id, title, date, timezone);
+      await createReminderRequest(item._id, title, date, timezone, repeat);
       setNotice({ kind: "success", message: t("reminderAdded") });
       await refresh();
     },

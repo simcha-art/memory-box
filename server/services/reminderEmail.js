@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import nodemailer from "nodemailer";
 import { getRemindersBeforeNow } from "./reminderService.js";
+import { nextOccurrence } from "../utils/recurrence.js";
 
 function hasEmailConfig(env) {
     return Boolean(env.EMAIL_USER?.trim() && env.EMAIL_PASS?.trim());
@@ -172,7 +173,13 @@ export async function sendDueReminders({
     for (const reminder of reminders) {
         try {
             await sendEmail(reminder);
-            reminder.isSent = true;
+            const next = nextOccurrence(reminder);
+            if (next) {
+                reminder.reminderDate = next;
+                reminder.isSent = false;
+            } else {
+                reminder.isSent = true;
+            }
             await reminder.save();
             sent += 1;
         } catch (error) {

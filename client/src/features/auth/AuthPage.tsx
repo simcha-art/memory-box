@@ -1,5 +1,12 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Archive, ArrowUpRight, Box, MailCheck } from "lucide-react";
+import {
+  Archive,
+  ArrowUpRight,
+  Box,
+  Eye,
+  EyeOff,
+  MailCheck,
+} from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { ApiError } from "../../api/client";
 import { useAuth } from "./AuthContext";
@@ -17,6 +24,7 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
   const [info, setInfo] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const register = mode === "register";
@@ -26,6 +34,7 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
     setInfo("");
     setPendingEmail(null);
     setUnverifiedEmail(null);
+    setShowPassword(false);
   }, [mode]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -33,10 +42,17 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
     setError("");
     setInfo("");
     setUnverifiedEmail(null);
-    setSubmitting(true);
     const values = Object.fromEntries(
       new FormData(event.currentTarget).entries(),
     ) as Record<string, string>;
+    if (register) {
+      if (values.password !== values.confirmPassword) {
+        setError(text.passwordsMismatch);
+        return;
+      }
+      delete values.confirmPassword;
+    }
+    setSubmitting(true);
     try {
       const result = await authenticate(mode, values);
       if (result === "verification-sent") {
@@ -160,16 +176,62 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
                 </label>
                 <label>
                   {t("password")}
-                  <input
-                    name="password"
-                    type="password"
-                    required
-                    minLength={register ? 8 : 1}
-                    autoComplete={
-                      register ? "new-password" : "current-password"
-                    }
-                  />
+                  <span className="secret-input">
+                    <input
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      required
+                      minLength={register ? 8 : 1}
+                      autoComplete={
+                        register ? "new-password" : "current-password"
+                      }
+                    />
+                    <button
+                      className="icon-button icon-button-small"
+                      type="button"
+                      title={
+                        showPassword ? t("hidePassword") : t("showPassword")
+                      }
+                      aria-label={
+                        showPassword ? t("hidePassword") : t("showPassword")
+                      }
+                      onClick={() => setShowPassword((current) => !current)}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </span>
                 </label>
+                {register && (
+                  <label>
+                    {text.confirmPassword}
+                    <span className="secret-input">
+                      <input
+                        name="confirmPassword"
+                        type={showPassword ? "text" : "password"}
+                        required
+                        minLength={8}
+                        autoComplete="new-password"
+                      />
+                      <button
+                        className="icon-button icon-button-small"
+                        type="button"
+                        title={
+                          showPassword ? t("hidePassword") : t("showPassword")
+                        }
+                        aria-label={
+                          showPassword ? t("hidePassword") : t("showPassword")
+                        }
+                        onClick={() => setShowPassword((current) => !current)}
+                      >
+                        {showPassword ? (
+                          <EyeOff size={16} />
+                        ) : (
+                          <Eye size={16} />
+                        )}
+                      </button>
+                    </span>
+                  </label>
+                )}
                 {error && (
                   <PopupNotice message={error} onClose={() => setError("")} />
                 )}

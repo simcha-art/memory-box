@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { REPEAT_TYPES } from '../utils/recurrence.js';
 
 const itemTypes = ['Document', 'Receipt', 'Note', 'Link', 'Image', 'Password'];
 
@@ -79,15 +80,25 @@ export const itemListSchema = z.object({
   tag: z.string().trim().max(40).optional(),
 });
 
-export const reminderSchema = z.object({
+const reminderFields = {
   itemId: z.string().regex(/^[a-f\d]{24}$/i),
   title: z.string().trim().min(1).max(160),
   reminderDate: z.coerce.date(),
+  repeat: z.enum(REPEAT_TYPES),
+  completed: z.boolean(),
+};
+
+export const reminderSchema = z.object({
+  ...reminderFields,
   timezone: timeZoneSchema.default('UTC'),
-  completed: z.boolean().optional(),
+  repeat: reminderFields.repeat.optional(),
+  completed: reminderFields.completed.optional(),
 });
 
-export const reminderUpdateSchema = reminderSchema.partial().refine((value) => Object.keys(value).length > 0, {
+export const reminderUpdateSchema = z.object({
+  ...reminderFields,
+  timezone: timeZoneSchema,
+}).partial().refine((value) => Object.keys(value).length > 0, {
   message: 'At least one reminder field is required',
 });
 
