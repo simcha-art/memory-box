@@ -7,13 +7,13 @@ import {
   Plus,
   ShieldCheck,
   Trash2,
-  X,
 } from "lucide-react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../features/auth/AuthContext";
 import { useWorkspace } from "../stores/WorkspaceStore";
 import { usePreferences } from "../stores/PreferencesStore";
 import { PreferenceControls } from "./PreferenceControls";
+import { PopupNotice } from "./PopupNotice";
 import { Dialog } from "./Dialog";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { categoryLabel } from "../utils/categories";
@@ -243,23 +243,14 @@ export function AppShell() {
         </header>
         <div className="page-container">
           {(error || notice) && (
-            <div
-              className={`notice ${error ? "notice-error" : notice?.kind === "error" ? "notice-error" : "notice-success"}`}
-              role={error || notice?.kind === "error" ? "alert" : "status"}
-            >
-              <span>{error || notice?.message}</span>
-              <button
-                type="button"
-                className="icon-button"
-                aria-label={t("close")}
-                onClick={() => {
-                  setError("");
-                  dismissNotice();
-                }}
-              >
-                <X size={16} />
-              </button>
-            </div>
+            <PopupNotice
+              message={error || notice?.message || ""}
+              kind={error ? "error" : notice?.kind}
+              onClose={() => {
+                setError("");
+                dismissNotice();
+              }}
+            />
           )}
           <Outlet />
         </div>

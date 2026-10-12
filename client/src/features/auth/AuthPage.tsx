@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { usePreferences } from '../../stores/PreferencesStore';
 import { PreferenceControls } from '../../components/PreferenceControls';
+import { PopupNotice } from '../../components/PopupNotice';
 
 export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
   const { authenticate } = useAuth();
@@ -49,7 +50,7 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
           {register && <label>{t('name')}<input name="name" required maxLength={80} autoComplete="name" /></label>}
           <label>{t('email')}<input name="email" type="email" required autoComplete="email" /></label>
           <label>{t('password')}<input name="password" type="password" required minLength={register ? 8 : 1} autoComplete={register ? 'new-password' : 'current-password'} /></label>
-          {error && <p className="form-error" role="alert">{error}</p>}
+          {error && <PopupNotice message={error} onClose={() => setError('')} />}
           <button className="button button-primary auth-submit" type="submit" disabled={submitting}>{submitting ? t('loadingApp') : register ? t('register') : t('signIn')}<ArrowUpRight size={17} /></button>
         </form>
         <p className="auth-switch">{register ? t('haveAccount') : t('noAccount')} <Link to={register ? '/login' : '/register'}>{register ? t('signIn') : t('signUp')}</Link></p>
