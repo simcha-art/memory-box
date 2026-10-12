@@ -13,13 +13,29 @@ function issueToken(userId, userEmail) {
 }
 
 function presentUser(user) {
-  return { id: user._id.toString(), name: user.name, email: user.email };
+  return { id: user._id.toString(), name: user.name, email: user.email, role: user.role || 'user' };
+}
+
+function adminEmails() {
+  return (process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+async function syncAdminRole(user) {
+  if (user.role !== 'admin' && adminEmails().includes(user.email)) {
+    user.role = 'admin';
+    await user.save();
+  }
+  return user;
 }
 
 export async function registerUser(input) {
   const password = await bcrypt.hash(input.password, 12);
   try {
-    const user = await User.create({ ...input, password });
+    const created = await User.create({ ...input, password });
+    const user = await syncAdminRole(created);
     return { user: presentUser(user), token: issueToken(user._id, user.email) };
   } catch (error) {
     if (error?.code === 11000) {
@@ -30,10 +46,14 @@ export async function registerUser(input) {
 }
 
 export async function loginUser(input) {
-  const user = await User.findOne({ email: input.email }).select('+password');
-  if (!user || !(await bcrypt.compare(input.password, user.password))) {
+  const found = await User.findOne({ email: input.email }).select('+password');
+  if (!found || !(await bcrypt.compare(input.password, found.password))) {
     throw new ApiError(401, 'Email or password is incorrect');
   }
+  if (found.disabled) {
+    throw new ApiError(403, 'This account has been disabled');
+  }
+  const user = await syncAdminRole(found);
   return { user: presentUser(user), token: issueToken(user._id, user.email) };
 }
 
@@ -42,5 +62,5 @@ export async function getCurrentUser(userId) {
   if (!user) {
     throw new ApiError(401, 'Account no longer exists');
   }
-  return presentUser(user);
+  return presentUser(await syncAdminRole(user));
 }
