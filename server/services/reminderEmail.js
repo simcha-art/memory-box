@@ -29,7 +29,7 @@ function getTimeZone(value) {
     }
 }
 
-export function formatReminderEmail(reminder) {
+export function formatReminderEmail(reminder, clientUrl = process.env.CLIENT_URL || "http://localhost:5173") {
     const date = new Date(reminder.reminderDate);
     const formattedDate = date.toLocaleString("en-US", {
         dateStyle: "full",
@@ -122,7 +122,7 @@ export function formatReminderEmail(reminder) {
 
         <!-- Action button -->
         <div style="margin-bottom: 12px;">
-          <a href="${escapeHtml("http://localhost:5173/reminders")}"
+          <a href="${escapeHtml(`${clientUrl.replace(/\/+$/, "")}/reminders`)}"
              target="_blank"
              style="
                display: inline-block;

@@ -3,13 +3,15 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import { ApiError } from '../utils/ApiError.js';
+import { sendPasswordResetEmail } from './passwordResetEmail.js';
 import { sendVerificationEmail } from './verificationEmail.js';
 
 const VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000;
 const RESEND_COOLDOWN_MS = 60 * 1000;
+const RESET_TTL_MS = 60 * 60 * 1000;
+const RESET_COOLDOWN_MS = 60 * 1000;
 
 function issueToken(userId, userEmail) {
-  "the token should contain the userId and email in the payload, and should be signed with a secret key"
   const secret = process.env.JWT_SECRET;
   if (!secret) {
     throw new Error('JWT_SECRET is required');
@@ -40,20 +42,23 @@ function hashToken(token) {
   return crypto.createHash('sha256').update(token).digest('hex');
 }
 
-function createVerificationToken() {
+function createToken(ttlMs) {
   const token = crypto.randomBytes(32).toString('hex');
   return {
     token,
     hash: hashToken(token),
-    expires: new Date(Date.now() + VERIFICATION_TTL_MS),
+    expires: new Date(Date.now() + ttlMs),
   };
+}
+
+function createVerificationToken() {
+  return createToken(VERIFICATION_TTL_MS);
 }
 
 async function deliverVerificationEmail(user, token) {
   try {
     await sendVerificationEmail({ name: user.name, email: user.email, token });
   } catch (error) {
-    // The account already exists; the user can request another email via "resend".
     console.error(`Could not send verification email to ${user.email}:`, error);
   }
 }
@@ -133,6 +138,45 @@ export async function resendVerificationEmail(email) {
   user.verificationExpires = verification.expires;
   await user.save();
   await deliverVerificationEmail(user, verification.token);
+}
+
+export async function requestPasswordReset(email) {
+  const user = await User.findOne({ email }).select('+passwordResetExpires');
+  if (!user || user.disabled) return;
+
+  const lastSentAt = user.passwordResetExpires
+    ? user.passwordResetExpires.getTime() - RESET_TTL_MS
+    : 0;
+  if (Date.now() - lastSentAt < RESET_COOLDOWN_MS) return;
+
+  const reset = createToken(RESET_TTL_MS);
+  user.passwordResetHash = reset.hash;
+  user.passwordResetExpires = reset.expires;
+  await user.save();
+
+  try {
+    await sendPasswordResetEmail({ name: user.name, email: user.email, token: reset.token });
+  } catch (error) {
+    console.error(`Could not send password reset email to ${user.email}:`, error);
+  }
+}
+
+export async function resetPassword(token, newPassword) {
+  const user = await User.findOne({
+    passwordResetHash: hashToken(token),
+    passwordResetExpires: { $gt: new Date() },
+  }).select('+passwordResetHash +passwordResetExpires');
+
+  if (!user) {
+    throw new ApiError(400, 'This reset link is invalid or has expired');
+  }
+
+  user.password = await bcrypt.hash(newPassword, 12);
+  user.passwordResetHash = undefined;
+  user.passwordResetExpires = undefined;
+  user.passwordChangedAt = new Date();
+  user.emailVerified = true;
+  await user.save();
 }
 
 export async function getCurrentUser(userId) {

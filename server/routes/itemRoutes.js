@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { create, download, get, list, related, remove, search, secret, update } from '../controllers/itemController.js';
 import { authenticate } from '../middleware/authenticate.js';
+import { secretLimiter } from '../middleware/rateLimit.js';
 import { uploadSingleFile } from '../middleware/upload.js';
 
 const router = Router();
@@ -9,7 +10,7 @@ router.use(authenticate);
 router.get('/search', search);
 router.get('/:id/related', related);
 router.get('/:id/file', download);
-router.get('/:id/secret', secret);
+router.get('/:id/secret', secretLimiter, secret);
 router.get('/', list);
 router.post('/', uploadSingleFile, create);
 router.get('/:id', get);

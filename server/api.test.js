@@ -25,7 +25,6 @@ async function register(name, email) {
   expect(response.status).toBe(201);
   expect(response.body.token).toBeUndefined();
 
-  // New accounts must verify their email; mark it verified directly so other tests can sign in.
   await User.updateOne({ email }, { emailVerified: true });
   const login = await request(app).post('/api/auth/login').send({ email, password });
   expect(login.status).toBe(200);
@@ -113,6 +112,49 @@ describe('MemoryBox API', () => {
       .attach('file', Buffer.from('not a png'), { filename: 'fake.png', contentType: 'image/png' });
     expect(response.status).toBe(400);
     expect(response.body.error).toMatch(/content does not match/i);
+  });
+
+  it('stores saved passwords encrypted and reveals them only to the owner', async () => {
+    const owner = await register('Vault', `vault-${Date.now()}@example.com`);
+    const other = await register('Other', `other-${Date.now()}@example.com`);
+
+    const created = await asUser(owner.token).post('/api/items').send({
+      type: 'Password', title: 'Bank', username: 'ada', password: 'S3cret!pass', url: 'https://bank.example.com',
+    });
+    expect(created.status).toBe(201);
+    expect(created.body.item.type).toBe('Password');
+    expect(created.body.item.username).toBe('ada');
+    expect(created.body.item.hasPassword).toBe(true);
+    expect(created.body.item.passwordEnc).toBeUndefined();
+    expect(JSON.stringify(created.body)).not.toContain('S3cret!pass');
+
+    const id = created.body.item._id;
+    const list = await asUser(owner.token).get('/api/items');
+    expect(JSON.stringify(list.body)).not.toContain('S3cret!pass');
+
+    const revealed = await asUser(owner.token).get(`/api/items/${id}/secret`);
+    expect(revealed.status).toBe(200);
+    expect(revealed.body.password).toBe('S3cret!pass');
+    expect(revealed.headers['cache-control']).toMatch(/no-store/);
+
+    await asUser(other.token).get(`/api/items/${id}/secret`).expect(404);
+  });
+
+  it('requires a password for Password items and clears it when the type changes', async () => {
+    const account = await register('Switch', `switch-${Date.now()}@example.com`);
+    const api = asUser(account.token);
+
+    await api.post('/api/items').send({ type: 'Password', title: 'No pass', username: 'x' }).expect(400);
+
+    const created = await api.post('/api/items').send({ type: 'Password', title: 'Site', password: 'abc12345' });
+    expect(created.status).toBe(201);
+    const id = created.body.item._id;
+
+    const changed = await api.patch(`/api/items/${id}`).send({ type: 'Note' });
+    expect(changed.status).toBe(200);
+    expect(changed.body.item.hasPassword).toBe(false);
+    expect(changed.body.item.username).toBe('');
+    await api.get(`/api/items/${id}/secret`).expect(404);
   });
 
   it('adapts accepted input to the item type', async () => {

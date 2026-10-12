@@ -21,6 +21,15 @@ export const resendVerificationSchema = z.object({
   email: z.email().trim().toLowerCase(),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.email().trim().toLowerCase(),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().trim().min(1).max(200),
+  password: z.string().min(8).max(128),
+});
+
 const linkUrl = z.string().trim().max(2048).refine((value) => {
   try {
     return ['http:', 'https:'].includes(new URL(value).protocol);
