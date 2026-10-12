@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 function isValidTimeZone(value) {
   try {
-    new Intl.DateTimeFormat('en-US', { timeZone: value });
+    new Intl.DateTimeFormat('he-IL', { timeZone: value });
     return true;
   } catch {
     return false;
