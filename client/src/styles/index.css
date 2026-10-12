@@ -942,6 +942,16 @@ label {
   line-height: 1.5;
 }
 
+.notice-popup {
+  position: fixed;
+  top: 1rem;
+  left: 50%;
+  z-index: 2000;
+  width: min(32rem, calc(100vw - 2rem));
+  margin: 0;
+  transform: translateX(-50%);
+}
+
 .notice-error {
   color: var(--danger);
   background: var(--danger-wash);

@@ -1,6 +1,7 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { Eye, EyeOff, FileUp, Plus, Wand2, X } from 'lucide-react';
 import { Dialog } from '../../components/Dialog';
+import { PopupNotice } from '../../components/PopupNotice';
 import { usePreferences } from '../../stores/PreferencesStore';
 import { MAX_FILE_BYTES, acceptFor, fileAllowed, fileNameAllowed, formatLabelFor, inputKindFor } from '../../utils/fileRules';
 import { OTHER_CATEGORY_LABEL, categoryLabel, findCategoryName } from '../../utils/categories';
@@ -164,10 +165,10 @@ export function ItemEditor({ item, categories, onClose, onSave }: {
       </>}
       {kind === 'file' && <>
         <label className={`file-control ${fileError ? 'is-invalid' : ''}`}><span className="file-control-icon"><FileUp size={19} /></span><span className="file-control-copy"><strong>{item?.fileName && !staleFile ? item.fileName : t('attachment')}</strong><small>{t('fileAccepts')}: {formatLabelFor(type)} · {t('fileHint')}</small></span><input key={type} name="file" type="file" accept={acceptFor(type)} onChange={checkFile} /></label>
-        {fileError && <p className="form-error" role="alert">{fileError}</p>}
+        {fileError && <PopupNotice message={fileError} onClose={() => setFileError('')} />}
       </>}
       {staleFile && <p className="form-error" role="status">{t('fileWillBeRemoved')}</p>}
-      {error && <p className="form-error" role="alert">{error}</p>}
+      {error && <PopupNotice message={error} offset={fileError ? 1 : 0} onClose={() => setError('')} />}
       <footer className="dialog-actions"><button className="button button-secondary" type="button" onClick={onClose}>{t('cancel')}</button><button className="button button-primary" type="submit" disabled={saving}>{!saving && <Plus size={16} />}{saving ? t('saving') : item ? t('saveChanges') : t('saveItem')}</button></footer>
     </form>
   </Dialog>;

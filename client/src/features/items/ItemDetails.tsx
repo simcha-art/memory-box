@@ -1,10 +1,12 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Archive, CalendarDays, Check, ChevronRight, Copy, Download, Eye, EyeOff, FileText, Image, KeyRound, Link as LinkIcon, Pencil, ReceiptText, Tag, Trash2, X } from 'lucide-react';
 import { downloadItemFile, getRelatedItems, revealItemPassword } from '../../api/items';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { PopupNotice } from '../../components/PopupNotice';
 import { useDateFormat } from '../../hooks/useDateFormat';
 import { usePreferences } from '../../stores/PreferencesStore';
 import { useWorkspace } from '../../stores/WorkspaceStore';
-import type { ItemType, MemoryItem } from '../../types';
+import type { ItemType, MemoryItem, Reminder } from '../../types';
 import { categoryLabel } from '../../utils/categories';
 import { getReminderItemId } from '../../utils/reminders';
 
@@ -30,6 +32,8 @@ export function ItemDetails({ item, onClose, onEdit, onOpenRelated }: {
   const dateFormat = useDateFormat();
   const [related, setRelated] = useState<MemoryItem[]>([]);
   const [reminderError, setReminderError] = useState('');
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [reminderToDelete, setReminderToDelete] = useState<Reminder | null>(null);
   const [secret, setSecret] = useState<string | null>(null);
   const [copied, setCopied] = useState<'username' | 'password' | null>(null);
   const Icon = typeIcons[item.type as ItemType] || FileText;
@@ -102,7 +106,6 @@ export function ItemDetails({ item, onClose, onEdit, onOpenRelated }: {
   }
 
   async function remove() {
-    if (!window.confirm(t('confirmation'))) return;
     try {
       await deleteItem(item);
       onClose();
@@ -117,7 +120,7 @@ export function ItemDetails({ item, onClose, onEdit, onOpenRelated }: {
         <span className={`item-type-icon type-${item.type.toLowerCase()}`}><Icon size={19} /></span>
         <div className="detail-actions">
           <button className="icon-button" type="button" title={t('edit')} aria-label={t('edit')} onClick={onEdit}><Pencil size={17} /></button>
-          <button className="icon-button danger-action" type="button" title={t('delete')} aria-label={t('delete')} onClick={() => void remove()}><Trash2 size={17} /></button>
+          <button className="icon-button danger-action" type="button" title={t('delete')} aria-label={t('delete')} onClick={() => setConfirmingDelete(true)}><Trash2 size={17} /></button>
           <button className="icon-button" type="button" title={t('close')} aria-label={t('close')} onClick={onClose}><X size={18} /></button>
         </div>
       </header>
@@ -159,16 +162,34 @@ export function ItemDetails({ item, onClose, onEdit, onOpenRelated }: {
           {itemReminders.map((reminder) => <div className={`detail-reminder ${reminder.completed ? 'is-complete' : ''}`} key={reminder._id}>
             <button className="check-button" type="button" aria-label={reminder.completed ? t('reopenReminder') : t('completeReminder')} onClick={() => void toggleReminder(reminder)}>{reminder.completed ? '✓' : ''}</button>
             <span>{reminder.title}</span><time>{dateFormat.format(new Date(reminder.reminderDate))}</time>
-            <button className="icon-button icon-button-small danger-action" type="button" title={t('deleteReminder')} aria-label={t('deleteReminder')} onClick={() => { if (window.confirm(t('reminderConfirmation'))) void deleteReminder(reminder); }}><Trash2 size={14} /></button>
+            <button className="icon-button icon-button-small danger-action" type="button" title={t('deleteReminder')} aria-label={t('deleteReminder')} onClick={() => setReminderToDelete(reminder)}><Trash2 size={14} /></button>
           </div>)}
           <form className="reminder-form" onSubmit={submitReminder}>
             <input name="title" required maxLength={160} aria-label={t('reminderTitle')} placeholder={t('reminderTitle')} />
             <input name="date" type="datetime-local" required aria-label={t('reminderDate')} />
-            {reminderError && <p className="form-error" role="alert">{reminderError}</p>}
+            {reminderError && <PopupNotice message={reminderError} onClose={() => setReminderError('')} />}
             <button className="button button-secondary" type="submit"><CalendarDays size={16} />{t('addReminder')}</button>
           </form>
         </section>
       </div>
     </aside>
+    {confirmingDelete && <ConfirmDialog
+      title={t('delete')}
+      message={t('confirmation')}
+      confirmLabel={t('delete')}
+      onCancel={() => setConfirmingDelete(false)}
+      onConfirm={() => { setConfirmingDelete(false); void remove(); }}
+    />}
+    {reminderToDelete && <ConfirmDialog
+      title={t('deleteReminder')}
+      message={t('reminderConfirmation')}
+      confirmLabel={t('deleteReminder')}
+      onCancel={() => setReminderToDelete(null)}
+      onConfirm={() => {
+        const reminder = reminderToDelete;
+        setReminderToDelete(null);
+        if (reminder) void deleteReminder(reminder);
+      }}
+    />}
   </div>;
 }
