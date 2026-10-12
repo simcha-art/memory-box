@@ -1,8 +1,9 @@
 const baseUrl = import.meta.env.VITE_API_URL + "/api" || 'http://localhost:3000/api';
 
 export class ApiError extends Error {
-  [x: string]: string;
-  constructor(message: string, readonly status: number, code: string) {
+  readonly code: string;
+
+  constructor(message: string, readonly status: number, code = '') {
     super(message);
     this.name = 'ApiError';
     this.code = code
@@ -15,7 +16,7 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
   if (token) headers.set('Authorization', `Bearer ${token}`);
   if (options.body && !(options.body instanceof FormData)) headers.set('Content-Type', 'application/json');
 
-  const response = await fetch(`${baseUrl}${path}`, { ...options, headers });
+  const response = await fetch(`${baseUrl}`, { ...options, headers });
   if (response.status === 204) return undefined as T;
   const payload: unknown = await response.json().catch(() => ({}));
   if (!response.ok) {
