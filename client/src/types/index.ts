@@ -17,12 +17,15 @@ export type MemoryItem = {
   updatedAt: string;
 };
 
+export type RepeatType = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+
 export type Reminder = {
   _id: string;
   itemId: { _id: string; title: string; type: ItemType } | string;
   title: string;
   reminderDate: string;
   timezone?: string;
+  repeat?: RepeatType;
   completed: boolean;
 };
 

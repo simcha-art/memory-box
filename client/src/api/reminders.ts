@@ -1,14 +1,14 @@
 import { request } from './client';
-import type { Reminder } from '../types';
+import type { Reminder, RepeatType } from '../types';
 
 export async function listReminders(): Promise<Reminder[]> {
   return (await request<{ reminders: Reminder[] }>('/reminders')).reminders;
 }
 
-export async function createReminder(itemId: string, title: string, reminderDate: string, timezone: string): Promise<void> {
+export async function createReminder(itemId: string, title: string, reminderDate: string, timezone: string, repeat: RepeatType = 'none'): Promise<void> {
   await request('/reminders', {
     method: 'POST',
-    body: JSON.stringify({ itemId, title, reminderDate: new Date(reminderDate).toISOString(), timezone }),
+    body: JSON.stringify({ itemId, title, reminderDate: new Date(reminderDate).toISOString(), timezone, repeat }),
   });
 }
 

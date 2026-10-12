@@ -18,7 +18,7 @@ export const uploadSingleFile = multer({
   limits: { fileSize: 10 * 1024 * 1024, files: 1 },
   fileFilter: (_request, file, callback) => {
     if (!allowedMimes.has(file.mimetype)) {
-      return callback(new ApiError(400, 'Only PDF, Word, JPG, PNG, and WEBP files are accepted'));
+      return callback(new ApiError(400, 'Unsupported file type. Accepted: PDF, Word, JPG, PNG, and WEBP'));
     }
     return callback(null, true);
   },

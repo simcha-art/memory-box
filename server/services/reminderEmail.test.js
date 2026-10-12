@@ -2,6 +2,14 @@ import { describe, expect, it, vi } from 'vitest';
 import { formatReminderEmail, sendDueReminders, startReminderScheduler } from './reminderEmail.js';
 
 describe('reminder email notifications', () => {
+  it('links to the configured client URL', () => {
+    const message = formatReminderEmail(
+      { title: 'Pay bill', reminderDate: '2026-01-01T12:00:00.000Z' },
+      'https://box.example.com/',
+    );
+    expect(message.html).toContain('href="https://box.example.com/reminders"');
+  });
+
   it('formats the reminder in its saved timezone and escapes its title', () => {
     const message = formatReminderEmail({
       title: '<script>alert(1)</script>',

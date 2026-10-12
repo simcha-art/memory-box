@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { REPEAT_TYPES } from '../utils/recurrence.js';
 
 function isValidTimeZone(value) {
   try {
@@ -21,6 +22,7 @@ const reminderSchema = new mongoose.Schema({
     default: 'UTC',
     validate: { validator: isValidTimeZone, message: 'Enter a valid IANA timezone' },
   },
+  repeat: { type: String, enum: REPEAT_TYPES, default: 'none' },
   completed: { type: Boolean, default: false },
 }, { timestamps: true });
 

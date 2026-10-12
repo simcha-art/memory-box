@@ -1,14 +1,38 @@
-import { useEffect, useState, type FormEvent } from 'react';
-import { Archive, CalendarDays, Check, ChevronRight, Copy, Download, Eye, EyeOff, FileText, Image, KeyRound, Link as LinkIcon, Pencil, ReceiptText, Tag, Trash2, X } from 'lucide-react';
-import { downloadItemFile, getRelatedItems, revealItemPassword } from '../../api/items';
-import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { PopupNotice } from '../../components/PopupNotice';
-import { useDateFormat } from '../../hooks/useDateFormat';
-import { usePreferences } from '../../stores/PreferencesStore';
-import { useWorkspace } from '../../stores/WorkspaceStore';
-import type { ItemType, MemoryItem, Reminder } from '../../types';
-import { categoryLabel } from '../../utils/categories';
-import { getReminderItemId } from '../../utils/reminders';
+import { useEffect, useState, type FormEvent } from "react";
+import {
+  Archive,
+  CalendarDays,
+  Check,
+  ChevronRight,
+  Copy,
+  Download,
+  Eye,
+  EyeOff,
+  FileText,
+  Image,
+  KeyRound,
+  Link as LinkIcon,
+  Pencil,
+  ReceiptText,
+  Repeat,
+  Tag,
+  Trash2,
+  X,
+} from "lucide-react";
+import {
+  downloadItemFile,
+  getRelatedItems,
+  revealItemPassword,
+} from "../../api/items";
+import { ConfirmDialog } from "../../components/ConfirmDialog";
+import { PopupNotice } from "../../components/PopupNotice";
+import { useDateFormat } from "../../hooks/useDateFormat";
+import { usePreferences } from "../../stores/PreferencesStore";
+import { useWorkspace } from "../../stores/WorkspaceStore";
+import type { ItemType, MemoryItem, Reminder, RepeatType } from "../../types";
+import { categoryLabel } from "../../utils/categories";
+import { getReminderItemId } from "../../utils/reminders";
+import { REPEAT_OPTIONS, repeatMessages } from "../reminders/repeatMessages";
 
 const typeIcons = {
   Document: FileText,
@@ -21,23 +45,39 @@ const typeIcons = {
 
 const AUTO_HIDE_MS = 30_000;
 
-export function ItemDetails({ item, onClose, onEdit, onOpenRelated }: {
+export function ItemDetails({
+  item,
+  onClose,
+  onEdit,
+  onOpenRelated,
+}: {
   item: MemoryItem;
   onClose: () => void;
   onEdit: () => void;
   onOpenRelated: (item: MemoryItem) => void;
 }) {
-  const { reminders, deleteItem, addReminder, toggleReminder, deleteReminder, setError } = useWorkspace();
+  const {
+    reminders,
+    deleteItem,
+    addReminder,
+    toggleReminder,
+    deleteReminder,
+    setError,
+  } = useWorkspace();
   const { t, locale } = usePreferences();
   const dateFormat = useDateFormat();
   const [related, setRelated] = useState<MemoryItem[]>([]);
-  const [reminderError, setReminderError] = useState('');
+  const [reminderError, setReminderError] = useState("");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [reminderToDelete, setReminderToDelete] = useState<Reminder | null>(null);
+  const [reminderToDelete, setReminderToDelete] = useState<Reminder | null>(
+    null,
+  );
   const [secret, setSecret] = useState<string | null>(null);
-  const [copied, setCopied] = useState<'username' | 'password' | null>(null);
+  const [copied, setCopied] = useState<"username" | "password" | null>(null);
   const Icon = typeIcons[item.type as ItemType] || FileText;
-  const itemReminders = reminders.filter((reminder) => getReminderItemId(reminder) === item._id);
+  const itemReminders = reminders.filter(
+    (reminder) => getReminderItemId(reminder) === item._id,
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -46,7 +86,8 @@ export function ItemDetails({ item, onClose, onEdit, onOpenRelated }: {
         if (!cancelled) setRelated(result);
       })
       .catch((reason: unknown) => {
-        if (!cancelled) setError(reason instanceof Error ? reason.message : t('loadError'));
+        if (!cancelled)
+          setError(reason instanceof Error ? reason.message : t("loadError"));
       });
     return () => {
       cancelled = true;
@@ -75,17 +116,20 @@ export function ItemDetails({ item, onClose, onEdit, onOpenRelated }: {
     try {
       setSecret(await revealItemPassword(item._id));
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : t('passwordError'));
+      setError(reason instanceof Error ? reason.message : t("passwordError"));
     }
   }
 
-  async function copy(kind: 'username' | 'password') {
+  async function copy(kind: "username" | "password") {
     try {
-      const value = kind === 'username' ? item.username : await revealItemPassword(item._id);
+      const value =
+        kind === "username"
+          ? item.username
+          : await revealItemPassword(item._id);
       await navigator.clipboard.writeText(value);
       setCopied(kind);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : t('passwordError'));
+      setError(reason instanceof Error ? reason.message : t("passwordError"));
     }
   }
 
@@ -93,15 +137,19 @@ export function ItemDetails({ item, onClose, onEdit, onOpenRelated }: {
     event.preventDefault();
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
-    const title = String(form.get('title') || '').trim();
-    const date = String(form.get('date') || '');
+    const title = String(form.get("title") || "").trim();
+    const date = String(form.get("date") || "");
+    const repeat = String(form.get("repeat") || "none") as RepeatType;
     try {
-      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-      await addReminder(item, title, date, timezone);
+      const timezone =
+        Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+      await addReminder(item, title, date, timezone, repeat);
       formElement.reset();
-      setReminderError('');
+      setReminderError("");
     } catch (reason) {
-      setReminderError(reason instanceof Error ? reason.message : t('reminderError'));
+      setReminderError(
+        reason instanceof Error ? reason.message : t("reminderError"),
+      );
     }
   }
 
@@ -110,86 +158,318 @@ export function ItemDetails({ item, onClose, onEdit, onOpenRelated }: {
       await deleteItem(item);
       onClose();
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : t('loadError'));
+      setError(reason instanceof Error ? reason.message : t("loadError"));
     }
   }
 
-  return <div className="detail-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-    <aside className="detail-panel" role="dialog" aria-modal="true" aria-label={item.title}>
-      <header className="detail-header">
-        <span className={`item-type-icon type-${item.type.toLowerCase()}`}><Icon size={19} /></span>
-        <div className="detail-actions">
-          <button className="icon-button" type="button" title={t('edit')} aria-label={t('edit')} onClick={onEdit}><Pencil size={17} /></button>
-          <button className="icon-button danger-action" type="button" title={t('delete')} aria-label={t('delete')} onClick={() => setConfirmingDelete(true)}><Trash2 size={17} /></button>
-          <button className="icon-button" type="button" title={t('close')} aria-label={t('close')} onClick={onClose}><X size={18} /></button>
-        </div>
-      </header>
-      <div className="detail-content">
-        <p className="eyebrow">{item.category ? categoryLabel(item.category, locale) : t('noCategory')} <span>·</span> {t(item.type)} · {dateFormat.format(new Date(item.date || item.updatedAt))}</p>
-        <h2>{item.title}</h2>
-        {item.description && <p className="detail-description">{item.description}</p>}
-        {item.type === 'Password' && <section className="secret-card" aria-label={t('Password')}>
-          {item.username && <div className="secret-row">
-            <span className="secret-label">{t('username')}</span>
-            <strong className="secret-value" dir="ltr">{item.username}</strong>
-            <button className="icon-button icon-button-small" type="button" title={t('copy')} aria-label={t('copy')} onClick={() => void copy('username')}>{copied === 'username' ? <Check size={15} /> : <Copy size={15} />}</button>
-          </div>}
-          <div className="secret-row">
-            <span className="secret-label">{t('passwordField')}</span>
-            <strong className="secret-value" dir="ltr">{secret !== null ? secret : '••••••••••'}</strong>
-            <button className="icon-button icon-button-small" type="button" title={secret !== null ? t('hidePassword') : t('showPassword')} aria-label={secret !== null ? t('hidePassword') : t('showPassword')} onClick={() => void toggleSecret()}>{secret !== null ? <EyeOff size={15} /> : <Eye size={15} />}</button>
-            <button className="icon-button icon-button-small" type="button" title={t('copy')} aria-label={t('copy')} onClick={() => void copy('password')}>{copied === 'password' ? <Check size={15} /> : <Copy size={15} />}</button>
-          </div>
-        </section>}
-        {(item.type === 'Link' || item.type === 'Password') && item.url && <a className="attachment-card" href={item.url} target="_blank" rel="noopener noreferrer">
-          <span className="attachment-icon"><LinkIcon size={18} /></span><span className="attachment-name"><strong dir="ltr">{item.url}</strong><small>{t('openLink')}</small></span><ChevronRight size={17} />
-        </a>}
-        {item.fileName && <button className="attachment-card" type="button" onClick={() => void downloadItemFile(item).catch((reason: unknown) => setError(reason instanceof Error ? reason.message : t('fileError')))}>
-          <span className="attachment-icon"><Download size={18} /></span><span className="attachment-name"><strong>{item.fileName}</strong><small>{(item.fileSize / 1024 / 1024).toFixed(2)} MB</small></span><ChevronRight size={17} />
-        </button>}
-        {item.tags.length > 0 && <div className="tag-list"><Tag size={15} />{item.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>}
-        <section className="detail-section">
-          <div className="detail-section-title"><h3>{t('related')}</h3><span>{related.length}</span></div>
-          {related.length ? related.map((entry) => {
-            const RelatedIcon = typeIcons[entry.type] || Archive;
-            return <button className="related-item" key={entry._id} type="button" onClick={() => onOpenRelated(entry)}>
-              <span className={`item-type-icon small type-${entry.type.toLowerCase()}`}><RelatedIcon size={15} /></span><span className="related-copy"><strong>{entry.title}</strong><small>{entry.category ? categoryLabel(entry.category, locale) : t(entry.type)}</small></span><ChevronRight size={16} />
-            </button>;
-          }) : <p className="empty-copy">{t('noRelated')}</p>}
-        </section>
-        <section className="detail-section">
-          <div className="detail-section-title"><CalendarDays size={17} /><h3>{t('reminderForItem')}</h3></div>
-          {itemReminders.map((reminder) => <div className={`detail-reminder ${reminder.completed ? 'is-complete' : ''}`} key={reminder._id}>
-            <button className="check-button" type="button" aria-label={reminder.completed ? t('reopenReminder') : t('completeReminder')} onClick={() => void toggleReminder(reminder)}>{reminder.completed ? '✓' : ''}</button>
-            <span>{reminder.title}</span><time>{dateFormat.format(new Date(reminder.reminderDate))}</time>
-            <button className="icon-button icon-button-small danger-action" type="button" title={t('deleteReminder')} aria-label={t('deleteReminder')} onClick={() => setReminderToDelete(reminder)}><Trash2 size={14} /></button>
-          </div>)}
-          <form className="reminder-form" onSubmit={submitReminder}>
-            <input name="title" required maxLength={160} aria-label={t('reminderTitle')} placeholder={t('reminderTitle')} />
-            <input name="date" type="datetime-local" required aria-label={t('reminderDate')} />
-            {reminderError && <PopupNotice message={reminderError} onClose={() => setReminderError('')} />}
-            <button className="button button-secondary" type="submit"><CalendarDays size={16} />{t('addReminder')}</button>
-          </form>
-        </section>
-      </div>
-    </aside>
-    {confirmingDelete && <ConfirmDialog
-      title={t('delete')}
-      message={t('confirmation')}
-      confirmLabel={t('delete')}
-      onCancel={() => setConfirmingDelete(false)}
-      onConfirm={() => { setConfirmingDelete(false); void remove(); }}
-    />}
-    {reminderToDelete && <ConfirmDialog
-      title={t('deleteReminder')}
-      message={t('reminderConfirmation')}
-      confirmLabel={t('deleteReminder')}
-      onCancel={() => setReminderToDelete(null)}
-      onConfirm={() => {
-        const reminder = reminderToDelete;
-        setReminderToDelete(null);
-        if (reminder) void deleteReminder(reminder);
+  return (
+    <div
+      className="detail-backdrop"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
       }}
-    />}
-  </div>;
+    >
+      <aside
+        className="detail-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label={item.title}
+      >
+        <header className="detail-header">
+          <span className={`item-type-icon type-${item.type.toLowerCase()}`}>
+            <Icon size={19} />
+          </span>
+          <div className="detail-actions">
+            <button
+              className="icon-button"
+              type="button"
+              title={t("edit")}
+              aria-label={t("edit")}
+              onClick={onEdit}
+            >
+              <Pencil size={17} />
+            </button>
+            <button
+              className="icon-button danger-action"
+              type="button"
+              title={t("delete")}
+              aria-label={t("delete")}
+              onClick={() => setConfirmingDelete(true)}
+            >
+              <Trash2 size={17} />
+            </button>
+            <button
+              className="icon-button"
+              type="button"
+              title={t("close")}
+              aria-label={t("close")}
+              onClick={onClose}
+            >
+              <X size={18} />
+            </button>
+          </div>
+        </header>
+        <div className="detail-content">
+          <p className="eyebrow">
+            {item.category
+              ? categoryLabel(item.category, locale)
+              : t("noCategory")}{" "}
+            <span>·</span> {t(item.type)} ·{" "}
+            {dateFormat.format(new Date(item.date || item.updatedAt))}
+          </p>
+          <h2>{item.title}</h2>
+          {item.description && (
+            <p className="detail-description">{item.description}</p>
+          )}
+          {item.type === "Password" && (
+            <section className="secret-card" aria-label={t("Password")}>
+              {item.username && (
+                <div className="secret-row">
+                  <span className="secret-label">{t("username")}</span>
+                  <strong className="secret-value" dir="ltr">
+                    {item.username}
+                  </strong>
+                  <button
+                    className="icon-button icon-button-small"
+                    type="button"
+                    title={t("copy")}
+                    aria-label={t("copy")}
+                    onClick={() => void copy("username")}
+                  >
+                    {copied === "username" ? (
+                      <Check size={15} />
+                    ) : (
+                      <Copy size={15} />
+                    )}
+                  </button>
+                </div>
+              )}
+              <div className="secret-row">
+                <span className="secret-label">{t("passwordField")}</span>
+                <strong className="secret-value" dir="ltr">
+                  {secret !== null ? secret : "••••••••••"}
+                </strong>
+                <button
+                  className="icon-button icon-button-small"
+                  type="button"
+                  title={
+                    secret !== null ? t("hidePassword") : t("showPassword")
+                  }
+                  aria-label={
+                    secret !== null ? t("hidePassword") : t("showPassword")
+                  }
+                  onClick={() => void toggleSecret()}
+                >
+                  {secret !== null ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+                <button
+                  className="icon-button icon-button-small"
+                  type="button"
+                  title={t("copy")}
+                  aria-label={t("copy")}
+                  onClick={() => void copy("password")}
+                >
+                  {copied === "password" ? (
+                    <Check size={15} />
+                  ) : (
+                    <Copy size={15} />
+                  )}
+                </button>
+              </div>
+            </section>
+          )}
+          {(item.type === "Link" || item.type === "Password") && item.url && (
+            <a
+              className="attachment-card"
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span className="attachment-icon">
+                <LinkIcon size={18} />
+              </span>
+              <span className="attachment-name">
+                <strong dir="ltr">{item.url}</strong>
+                <small>{t("openLink")}</small>
+              </span>
+              <ChevronRight size={17} />
+            </a>
+          )}
+          {item.fileName && (
+            <button
+              className="attachment-card"
+              type="button"
+              onClick={() =>
+                void downloadItemFile(item).catch((reason: unknown) =>
+                  setError(
+                    reason instanceof Error ? reason.message : t("fileError"),
+                  ),
+                )
+              }
+            >
+              <span className="attachment-icon">
+                <Download size={18} />
+              </span>
+              <span className="attachment-name">
+                <strong>{item.fileName}</strong>
+                <small>{(item.fileSize / 1024 / 1024).toFixed(2)} MB</small>
+              </span>
+              <ChevronRight size={17} />
+            </button>
+          )}
+          {item.tags.length > 0 && (
+            <div className="tag-list">
+              <Tag size={15} />
+              {item.tags.map((tag) => (
+                <span key={tag}>{tag}</span>
+              ))}
+            </div>
+          )}
+          <section className="detail-section">
+            <div className="detail-section-title">
+              <h3>{t("related")}</h3>
+              <span>{related.length}</span>
+            </div>
+            {related.length ? (
+              related.map((entry) => {
+                const RelatedIcon = typeIcons[entry.type] || Archive;
+                return (
+                  <button
+                    className="related-item"
+                    key={entry._id}
+                    type="button"
+                    onClick={() => onOpenRelated(entry)}
+                  >
+                    <span
+                      className={`item-type-icon small type-${entry.type.toLowerCase()}`}
+                    >
+                      <RelatedIcon size={15} />
+                    </span>
+                    <span className="related-copy">
+                      <strong>{entry.title}</strong>
+                      <small>
+                        {entry.category
+                          ? categoryLabel(entry.category, locale)
+                          : t(entry.type)}
+                      </small>
+                    </span>
+                    <ChevronRight size={16} />
+                  </button>
+                );
+              })
+            ) : (
+              <p className="empty-copy">{t("noRelated")}</p>
+            )}
+          </section>
+          <section className="detail-section">
+            <div className="detail-section-title">
+              <CalendarDays size={17} />
+              <h3>{t("reminderForItem")}</h3>
+            </div>
+            {itemReminders.map((reminder) => (
+              <div
+                className={`detail-reminder ${reminder.completed ? "is-complete" : ""}`}
+                key={reminder._id}
+              >
+                <button
+                  className="check-button"
+                  type="button"
+                  aria-label={
+                    reminder.completed
+                      ? t("reopenReminder")
+                      : t("completeReminder")
+                  }
+                  onClick={() => void toggleReminder(reminder)}
+                >
+                  {reminder.completed ? "✓" : ""}
+                </button>
+                <span>{reminder.title}</span>
+                {reminder.repeat && reminder.repeat !== "none" && (
+                  <small title={repeatMessages[locale].label}>
+                    <Repeat size={12} aria-hidden="true" />{" "}
+                    {repeatMessages[locale][reminder.repeat]}
+                  </small>
+                )}
+                <time>
+                  {dateFormat.format(new Date(reminder.reminderDate))}
+                </time>
+                <button
+                  className="icon-button icon-button-small danger-action"
+                  type="button"
+                  title={t("deleteReminder")}
+                  aria-label={t("deleteReminder")}
+                  onClick={() => setReminderToDelete(reminder)}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+            <form className="reminder-form" onSubmit={submitReminder}>
+              <input
+                name="title"
+                required
+                maxLength={160}
+                aria-label={t("reminderTitle")}
+                placeholder={t("reminderTitle")}
+              />
+              <input
+                name="date"
+                type="datetime-local"
+                required
+                aria-label={t("reminderDate")}
+              />
+              <select
+                name="repeat"
+                defaultValue="none"
+                aria-label={repeatMessages[locale].label}
+                style={{ gridColumn: "1 / -1" }}
+              >
+                {REPEAT_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {repeatMessages[locale][option]}
+                  </option>
+                ))}
+              </select>
+              {reminderError && (
+                <PopupNotice
+                  message={reminderError}
+                  onClose={() => setReminderError("")}
+                />
+              )}
+              <button className="button button-secondary" type="submit">
+                <CalendarDays size={16} />
+                {t("addReminder")}
+              </button>
+            </form>
+          </section>
+        </div>
+      </aside>
+      {confirmingDelete && (
+        <ConfirmDialog
+          title={t("delete")}
+          message={t("confirmation")}
+          confirmLabel={t("delete")}
+          onCancel={() => setConfirmingDelete(false)}
+          onConfirm={() => {
+            setConfirmingDelete(false);
+            void remove();
+          }}
+        />
+      )}
+      {reminderToDelete && (
+        <ConfirmDialog
+          title={t("deleteReminder")}
+          message={t("reminderConfirmation")}
+          confirmLabel={t("deleteReminder")}
+          onCancel={() => setReminderToDelete(null)}
+          onConfirm={() => {
+            const reminder = reminderToDelete;
+            setReminderToDelete(null);
+            if (reminder) void deleteReminder(reminder);
+          }}
+        />
+      )}
+    </div>
+  );
 }

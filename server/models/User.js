@@ -6,6 +6,12 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true, select: false },
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
   disabled: { type: Boolean, default: false },
+  emailVerified: { type: Boolean, default: true },
+  verificationTokenHash: { type: String, select: false },
+  verificationExpires: { type: Date, select: false },
+  passwordResetHash: { type: String, select: false },
+  passwordResetExpires: { type: Date, select: false },
+  passwordChangedAt: { type: Date },
 }, { timestamps: true });
 
 export default mongoose.model('User', userSchema);
