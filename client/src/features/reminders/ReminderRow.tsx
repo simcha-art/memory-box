@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Check, Circle, Repeat, Trash2 } from "lucide-react";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { useDateFormat } from "../../hooks/useDateFormat";
@@ -19,6 +19,14 @@ export function ReminderRow({
 }) {
   const { t, locale } = usePreferences();
   const dateFormat = useDateFormat();
+  const timeFormat = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale === "he" ? "he-IL" : "en", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    [locale],
+  );
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const repeatLabel =
     reminder.repeat && reminder.repeat !== "none"
@@ -54,7 +62,8 @@ export function ReminderRow({
           )}
         </button>
         <time dateTime={reminder.reminderDate}>
-          {dateFormat.format(new Date(reminder.reminderDate))}
+          {dateFormat.format(new Date(reminder.reminderDate))},{" "}
+          {timeFormat.format(new Date(reminder.reminderDate))}
         </time>
         <button
           className="icon-button icon-button-small danger-action"

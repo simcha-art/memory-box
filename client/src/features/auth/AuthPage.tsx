@@ -176,7 +176,7 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
                 </label>
                 <label>
                   {t("password")}
-                  <span className="secret-input">
+                  <span className="password-field">
                     <input
                       name="password"
                       type={showPassword ? "text" : "password"}
@@ -204,7 +204,7 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
                 {register && (
                   <label>
                     {text.confirmPassword}
-                    <span className="secret-input">
+                    <span className="password-field">
                       <input
                         name="confirmPassword"
                         type={showPassword ? "text" : "password"}
