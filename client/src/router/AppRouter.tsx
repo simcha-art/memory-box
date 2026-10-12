@@ -1,6 +1,7 @@
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { AppShell } from "../components/AppShell";
 import { AuthPage } from "../features/auth/AuthPage";
+import { VerifyEmailPage } from "../pages/VerifyEmailPage";
 import { useAuth } from "../features/auth/AuthContext";
 import { AdminPage } from "../pages/AdminPage";
 import { ItemsPage } from "../pages/ItemsPage";
@@ -56,6 +57,7 @@ export function AppRouter() {
           user ? <Navigate to="/items" replace /> : <AuthPage mode="register" />
         }
       />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route element={<ProtectedRoutes />}>
         <Route element={<WorkspaceLayout />}>
           <Route index element={<Navigate to="/items" replace />} />

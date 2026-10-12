@@ -1,0 +1,26 @@
+export const verificationMessages = {
+  en: {
+    checkInboxTitle: 'Check your inbox',
+    checkInboxBody: (email: string) => `We sent a verification link to ${email}. Open it to activate your account.`,
+    checkInboxHint: "Can't find it? Check your spam folder.",
+    backToSignIn: 'Back to sign in',
+    notVerified: 'Please verify your email address before signing in.',
+    resend: 'Resend verification email',
+    resendDone: 'If this account is awaiting verification, a new email is on its way.',
+    verifying: 'Verifying your email…',
+    verifyFailedTitle: 'Verification failed',
+    verifyFailedBody: 'This link is invalid or has expired. Sign in to request a new one.',
+  },
+  he: {
+    checkInboxTitle: 'בדקו את תיבת הדואר',
+    checkInboxBody: (email: string) => `שלחנו קישור אימות אל ${email}. פתחו אותו כדי להפעיל את החשבון.`,
+    checkInboxHint: 'לא מוצאים? בדקו בתיקיית הספאם.',
+    backToSignIn: 'חזרה לכניסה',
+    notVerified: 'יש לאמת את כתובת המייל לפני הכניסה.',
+    resend: 'שליחה מחדש של מייל האימות',
+    resendDone: 'אם החשבון ממתין לאימות, נשלח אליו מייל חדש.',
+    verifying: 'מאמתים את המייל…',
+    verifyFailedTitle: 'האימות נכשל',
+    verifyFailedBody: 'הקישור אינו תקין או שפג תוקפו. היכנסו כדי לקבל קישור חדש.',
+  },
+};

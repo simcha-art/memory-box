@@ -6,6 +6,9 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true, select: false },
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
   disabled: { type: Boolean, default: false },
+  emailVerified: { type: Boolean, default: true },
+  verificationTokenHash: { type: String, select: false },
+  verificationExpires: { type: Date, select: false },
 }, { timestamps: true });
 
 export default mongoose.model('User', userSchema);

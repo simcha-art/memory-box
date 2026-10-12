@@ -31,12 +31,12 @@ function getTimeZone(value) {
 
 export function formatReminderEmail(reminder) {
     const date = new Date(reminder.reminderDate);
-    const formattedDate = date.toLocaleString("he-IL", {
+    const formattedDate = date.toLocaleString("en-US", {
         dateStyle: "full",
         timeStyle: "short",
         timeZone: getTimeZone(reminder.timezone || "UTC"),
     });
-    const title = escapeHtml(reminder.title);
+    const title = String(reminder.title ?? "");
 
     return {
         subject: `Reminder: ${reminder.title}`,

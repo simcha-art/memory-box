@@ -13,6 +13,14 @@ export const loginSchema = z.object({
   password: z.string().min(1).max(128),
 });
 
+export const verifyEmailSchema = z.object({
+  token: z.string().trim().min(1).max(200),
+});
+
+export const resendVerificationSchema = z.object({
+  email: z.email().trim().toLowerCase(),
+});
+
 const linkUrl = z.string().trim().max(2048).refine((value) => {
   try {
     return ['http:', 'https:'].includes(new URL(value).protocol);

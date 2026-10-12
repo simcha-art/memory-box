@@ -6,6 +6,7 @@ import authRoutes from './routes/authRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
 import itemRoutes from './routes/itemRoutes.js';
 import reminderRoutes from './routes/reminderRoutes.js';
+import { ApiError } from './utils/ApiError.js';
 
 const app = express();
 const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173')
@@ -46,7 +47,9 @@ app.use((error, _request, response, _next) => {
   }
   const status = Number.isInteger(error.status) ? error.status : 500;
   if (status >= 500) console.error(error);
-  return response.status(status).json({ error: status >= 500 ? 'Internal server error' : error.message });
+  const body = { error: status >= 500 ? 'Internal server error' : error.message };
+  if (error instanceof ApiError && error.code) body.code = error.code;
+  return response.status(status).json(body);
 });
 
 export default app;
