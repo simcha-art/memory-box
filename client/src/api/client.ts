@@ -1,4 +1,4 @@
-const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const baseUrl = import.meta.env.VITE_API_URL + "/api" || 'http://localhost:3000/api';
 
 export class ApiError extends Error {
   readonly code: string;
@@ -11,26 +11,29 @@ export class ApiError extends Error {
 }
 
 export async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  console.log(`path: ${path}, options:`, options);
   const headers = new Headers(options.headers);
   const token = localStorage.getItem('memorybox-token');
   if (token) headers.set('Authorization', `Bearer ${token}`);
   if (options.body && !(options.body instanceof FormData)) headers.set('Content-Type', 'application/json');
 
-  const response = await fetch(`${baseUrl}${path}`, { ...options, headers });
+  const response = await fetch(`${baseUrl}${path ?? ''}`, { ...options, headers });
   if (response.status === 204) return undefined as T;
   const payload: unknown = await response.json().catch(() => ({}));
   if (!response.ok) {
     const message = typeof payload === 'object' && payload !== null && 'error' in payload && typeof payload.error === 'string'
       ? payload.error
       : 'Something went wrong';
+    console.error(`API Error: ${message} (Status: ${response.status})`);
     throw new ApiError(message, response.status);
   }
   return payload as T;
 }
 
 export async function downloadFile(path: string, fileName: string): Promise<void> {
+  console.log(`Downloading file from path: ${path}, with filename: ${fileName}`);
   const token = localStorage.getItem('memorybox-token');
-  const response = await fetch(`${baseUrl}${path}`, {
+  const response = await fetch(`${baseUrl}${path ?? ''}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!response.ok) {
