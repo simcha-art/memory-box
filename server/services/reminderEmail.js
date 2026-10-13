@@ -30,7 +30,10 @@ function getTimeZone(value) {
     }
 }
 
-export function formatReminderEmail(reminder, clientUrl = process.env.CLIENT_URL || "http://localhost:5173") {
+export function formatReminderEmail(
+    reminder,
+    clientUrl = process.env.CLIENT_URL || "http://localhost:5173",
+) {
     const date = new Date(reminder.reminderDate);
     const formattedDate = date.toLocaleString("en-US", {
         dateStyle: "full",
@@ -155,7 +158,7 @@ export function formatReminderEmail(reminder, clientUrl = process.env.CLIENT_URL
 
 </body>
 </html>
-`
+`,
     };
 }
 
@@ -205,9 +208,18 @@ export function startReminderScheduler({
     const mailTransporter =
         transporter ||
         nodemailer.createTransport({
-            service: "gmail",
+            service: "smtp.gmail.com",
+            port: 465,
+            secure: true,
             auth: { user: env.EMAIL_USER, pass: env.EMAIL_PASS },
         });
+    mailTransporter.verify((error, success) => {
+        if (error) {
+            console.error("SMTP Connection Error:", error);
+        } else {
+            console.log("Server is ready to take our messages");
+        }
+    });
     let running = false;
 
     return cron.schedule("* * * * *", async () => {
