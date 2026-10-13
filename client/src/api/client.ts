@@ -1,4 +1,9 @@
-const baseUrl = import.meta.env.VITE_API_URL + "/api" || 'http://localhost:3000/api';
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim().replace(/\/+$/, '');
+const baseUrl = configuredApiUrl
+  ? configuredApiUrl.endsWith('/api')
+    ? configuredApiUrl
+    : `${configuredApiUrl}/api`
+  : 'http://localhost:3000/api';
 
 export class ApiError extends Error {
   readonly code: string;
@@ -11,7 +16,6 @@ export class ApiError extends Error {
 }
 
 export async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  console.log(`path: ${path}, options:`, options);
   const headers = new Headers(options.headers);
   const token = localStorage.getItem('memorybox-token');
   if (token) headers.set('Authorization', `Bearer ${token}`);
@@ -31,7 +35,6 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
 }
 
 export async function downloadFile(path: string, fileName: string): Promise<void> {
-  console.log(`Downloading file from path: ${path}, with filename: ${fileName}`);
   const token = localStorage.getItem('memorybox-token');
   const response = await fetch(`${baseUrl}${path ?? ''}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
