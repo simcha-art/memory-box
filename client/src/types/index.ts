@@ -31,7 +31,12 @@ export type Reminder = {
 
 export type UserRole = 'user' | 'admin';
 export type MemoryUser = { id: string; name: string; email: string; role: UserRole };
-export type AdminUser = MemoryUser & { disabled: boolean; itemCount: number; createdAt: string };
+export type AdminUser = MemoryUser & {
+  disabled: boolean;
+  emailVerified: boolean;
+  itemCount: number;
+  createdAt: string;
+};
 export type Category = { _id: string; name: string; isDefault?: boolean };
 export type ItemInput = Pick<MemoryItem, 'title' | 'description' | 'type' | 'category' | 'url' | 'tags' | 'date'> & {
   username?: string;

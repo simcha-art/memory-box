@@ -1,0 +1,10 @@
+{
+  "name": "memory-box-workspace",
+  "private": true,
+  "scripts": {
+    "test": "npm run test:all",
+    "test:all": "npm run test --prefix server && npm run test --prefix client",
+    "test:coverage": "npm run test:coverage --prefix server && npm run test:coverage --prefix client",
+    "test:ci": "npm run test:coverage && npm run build --prefix client"
+  }
+}

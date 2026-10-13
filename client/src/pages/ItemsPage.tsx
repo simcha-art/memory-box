@@ -25,7 +25,8 @@ export function ItemsPage() {
   const [editing, setEditing] = useState<MemoryItem | null | false>(false);
   const sourceItems = searchResults ?? items;
   const visibleItems = useMemo(() => sourceItems.filter((item) =>
-    (!categoryFilter || item.category === categoryFilter) && (!typeFilter || item.type === typeFilter)),
+    (!categoryFilter || item.category === categoryFilter) &&
+    (!typeFilter || item.type === typeFilter)),
   [sourceItems, categoryFilter, typeFilter]);
   const upcomingReminders = reminders.filter((reminder) => !reminder.completed).slice(0, 3);
 
@@ -41,7 +42,7 @@ export function ItemsPage() {
     </section>
     <div className="toolbar">
       <label className="search-field"><Search size={18} /><input aria-label={t('allSaved')} placeholder={t('search')} value={query} onChange={(event) => updateSearch(event.target.value)} /></label>
-      <label className="filter-field"><Tag size={16} /><select aria-label={t('filterType')} value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as ItemType | '')}>
+      <label className="filter-field"><Tag size={16} /><select className="type-filter" aria-label={t('filterType')} value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as ItemType | '')}>
         <option value="">{t('allTypes')}</option>{itemTypes.map((type) => <option key={type} value={type}>{t(type)}</option>)}
       </select></label>
       <span className="sort-indicator"><ArrowDown size={15} />{t('recent')}</span>

@@ -12,7 +12,7 @@ const urlTypes = new Set(['Link', 'Password']);
 const fileDirectory = path.resolve(process.env.UPLOAD_DIR || 'uploads');
 
 function escapeRegex(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return String(value ?? '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 export async function listItems(userId, filters) {
@@ -80,7 +80,19 @@ export async function deleteItem(userId, itemId) {
 }
 
 export async function searchItems(userId, query) {
-  const expression = new RegExp(escapeRegex(query), 'i');
+  const normalizedQuery = String(query ?? '').trim();
+  if (!normalizedQuery) return [];
+  const tags = normalizedQuery.split(',').map((tag) => tag.trim()).filter(Boolean);
+  if (tags.length > 1) {
+    const filter = {
+      userId,
+      $and: tags.map((tag) => ({
+        tags: new RegExp(`^${escapeRegex(tag)}$`, 'i'),
+      })),
+    };
+    return Item.find(filter).sort({ updatedAt: -1, _id: 1 }).limit(200);
+  }
+  const expression = new RegExp(escapeRegex(normalizedQuery), 'i');
   const items = [];
   const seenIds = new Set();
 
@@ -100,15 +112,16 @@ export async function searchItems(userId, query) {
 
 export async function findRelatedItems(userId, itemId) {
   const item = await getItem(userId, itemId);
+  const itemTags = Array.isArray(item.tags) ? item.tags : [];
   const conditions = [];
-  if (item.tags.length) conditions.push({ tags: { $in: item.tags } });
+  if (itemTags.length) conditions.push({ tags: { $in: itemTags } });
   if (item.category) conditions.push({ category: item.category });
   if (!conditions.length) return [];
 
   const candidates = await Item.find({ userId, _id: { $ne: item._id }, $or: conditions }).limit(200);
   return candidates.map((candidate) => ({
     item: candidate,
-    sharedTags: candidate.tags.filter((tag) => item.tags.includes(tag)).length,
+    sharedTags: (candidate.tags || []).filter((tag) => itemTags.includes(tag)).length,
     sharedCategory: Boolean(item.category && item.category === candidate.category),
   })).sort((left, right) => (right.sharedTags - left.sharedTags)
     || (Number(right.sharedCategory) - Number(left.sharedCategory))
@@ -119,8 +132,10 @@ export async function findRelatedItems(userId, itemId) {
 export async function getStoredFile(userId, itemId) {
   const item = await getItem(userId, itemId);
   if (!item.storageName) throw new ApiError(404, 'File not found');
-  const fullPath = path.resolve(fileDirectory, item.storageName);
-  if (!fullPath.startsWith(`${fileDirectory}${path.sep}`)) throw new ApiError(404, 'File not found');
+  const rootDirectory = path.resolve(fileDirectory);
+  const fullPath = path.resolve(rootDirectory, item.storageName);
+  const isWithinRoot = fullPath === rootDirectory || fullPath.startsWith(`${rootDirectory}${path.sep}`);
+  if (!isWithinRoot) throw new ApiError(404, 'File not found');
   try {
     await fs.access(fullPath);
   } catch {
@@ -139,8 +154,10 @@ function fileFields(file) {
 }
 
 async function removeStoredFile(storageName) {
-  const fullPath = path.resolve(fileDirectory, storageName);
-  if (fullPath.startsWith(`${fileDirectory}${path.sep}`)) {
+  const rootDirectory = path.resolve(fileDirectory);
+  const fullPath = path.resolve(rootDirectory, storageName);
+  const isWithinRoot = fullPath === rootDirectory || fullPath.startsWith(`${rootDirectory}${path.sep}`);
+  if (isWithinRoot) {
     await fs.rm(fullPath, { force: true });
   }
 }

@@ -59,7 +59,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await mongoose.disconnect();
-  await mongo.stop();
+  if (mongo) await mongo.stop();
 });
 
 describe('MemoryBox API', () => {
@@ -101,6 +101,22 @@ describe('MemoryBox API', () => {
   it('does not reveal whether an account exists when resending verification', async () => {
     await request(app).post('/api/auth/resend-verification')
       .send({ email: `nobody-${Date.now()}@example.com` }).expect(200);
+  });
+
+  it('shows email verification status in the admin user list', async () => {
+    const suffix = Date.now();
+    const adminEmail = `admin-${suffix}@example.com`;
+    const admin = await register('Admin', adminEmail);
+    await User.updateOne({ email: adminEmail }, { role: 'admin' });
+
+    const unverifiedEmail = `pending-${suffix}@example.com`;
+    await request(app).post('/api/auth/register').send({
+      name: 'Pending', email: unverifiedEmail, password: 'correct-horse-42',
+    }).expect(201);
+
+    const { body } = await asUser(admin.token).get('/api/admin/users').expect(200);
+    expect(body.users.find((user) => user.email === adminEmail).emailVerified).toBe(true);
+    expect(body.users.find((user) => user.email === unverifiedEmail).emailVerified).toBe(false);
   });
 
   it('rejects file bodies that do not match an allowed upload MIME type', async () => {
@@ -217,6 +233,19 @@ describe('MemoryBox API', () => {
     expect(response.body.items[1].tags).toContain('needle');
     expect(response.body.items[2].description).toContain('needle');
     expect(response.body.items[3].category).toBe('needle');
+  });
+
+  it('searches for items with every comma-separated tag, ignoring case and spaces', async () => {
+    const account = await register('Tag Search', `tag-search-${Date.now()}@example.com`);
+    const matchingItem = await addItem(account.token, {
+      title: 'Travel papers', tags: ['Warrenty', 'Computer'],
+    });
+    await addItem(account.token, { title: 'Warranty only', tags: ['Warrenty'] });
+    await addItem(account.token, { title: 'Computer only', tags: ['Computer'] });
+
+    const response = await asUser(account.token)
+      .get('/api/items/search?q=%20warrenty%20%2C%20computer%20').expect(200);
+    expect(response.body.items.map((item) => item._id)).toEqual([matchingItem._id]);
   });
 
   it('returns related items and upcoming reminders only within the owner account', async () => {

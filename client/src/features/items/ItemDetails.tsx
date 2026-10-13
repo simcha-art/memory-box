@@ -66,6 +66,7 @@ export function ItemDetails({
   } = useWorkspace();
   const { t, locale } = usePreferences();
   const dateFormat = useDateFormat();
+  const safeTags = Array.isArray(item.tags) ? item.tags : [];
   const [related, setRelated] = useState<MemoryItem[]>([]);
   const [reminderError, setReminderError] = useState("");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -318,10 +319,10 @@ export function ItemDetails({
               <ChevronRight size={17} />
             </button>
           )}
-          {item.tags.length > 0 && (
+          {safeTags.length > 0 && (
             <div className="tag-list">
               <Tag size={15} />
-              {item.tags.map((tag) => (
+              {safeTags.map((tag) => (
                 <span key={tag}>{tag}</span>
               ))}
             </div>
