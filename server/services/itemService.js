@@ -82,6 +82,16 @@ export async function deleteItem(userId, itemId) {
 export async function searchItems(userId, query) {
   const normalizedQuery = String(query ?? '').trim();
   if (!normalizedQuery) return [];
+  const tags = normalizedQuery.split(',').map((tag) => tag.trim()).filter(Boolean);
+  if (tags.length > 1) {
+    const filter = {
+      userId,
+      $and: tags.map((tag) => ({
+        tags: new RegExp(`^${escapeRegex(tag)}$`, 'i'),
+      })),
+    };
+    return Item.find(filter).sort({ updatedAt: -1, _id: 1 }).limit(200);
+  }
   const expression = new RegExp(escapeRegex(normalizedQuery), 'i');
   const items = [];
   const seenIds = new Set();

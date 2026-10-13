@@ -1083,6 +1083,20 @@ label {
   box-shadow: none;
 }
 
+.type-filter option {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  color: var(--ink);
+  background-color: var(--card);
+  font-family: var(--font-body);
+  font-size: 1rem;
+}
+
+.type-filter option:checked {
+  background-color: var(--select);
+  font-weight: 700;
+}
+
 .sort-indicator {
   display: flex;
   align-items: center;
