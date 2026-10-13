@@ -40,12 +40,18 @@ export function ReminderCalendar({ reminders, selectedDate, onSelectDate }: { re
     setMonth((current) => new Date(current.getFullYear(), current.getMonth() + delta, 1));
   }
 
+  function goToToday() {
+    const today = new Date();
+    setMonth(new Date(today.getFullYear(), today.getMonth(), 1));
+    onSelectDate(today);
+  }
+
   return <section className="reminder-calendar-card" aria-label={t('calendar')}>
     <header className="calendar-header">
       <h2>{monthLabel}</h2>
       <div className="calendar-controls">
         <button className="icon-button" type="button" aria-label={t('previousMonth')} onClick={() => shift(-1)}><Prev size={17} /></button>
-        <button className="language-button" type="button" onClick={() => { const n = new Date(); setMonth(new Date(n.getFullYear(), n.getMonth(), 1)); }}>{t('today')}</button>
+        <button className="language-button" type="button" onClick={goToToday}>{t('today')}</button>
         <button className="icon-button" type="button" aria-label={t('nextMonth')} onClick={() => shift(1)}><Next size={17} /></button>
       </div>
     </header>

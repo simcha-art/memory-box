@@ -59,7 +59,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await mongoose.disconnect();
-  await mongo.stop();
+  if (mongo) await mongo.stop();
 });
 
 describe('MemoryBox API', () => {
@@ -101,6 +101,22 @@ describe('MemoryBox API', () => {
   it('does not reveal whether an account exists when resending verification', async () => {
     await request(app).post('/api/auth/resend-verification')
       .send({ email: `nobody-${Date.now()}@example.com` }).expect(200);
+  });
+
+  it('shows email verification status in the admin user list', async () => {
+    const suffix = Date.now();
+    const adminEmail = `admin-${suffix}@example.com`;
+    const admin = await register('Admin', adminEmail);
+    await User.updateOne({ email: adminEmail }, { role: 'admin' });
+
+    const unverifiedEmail = `pending-${suffix}@example.com`;
+    await request(app).post('/api/auth/register').send({
+      name: 'Pending', email: unverifiedEmail, password: 'correct-horse-42',
+    }).expect(201);
+
+    const { body } = await asUser(admin.token).get('/api/admin/users').expect(200);
+    expect(body.users.find((user) => user.email === adminEmail).emailVerified).toBe(true);
+    expect(body.users.find((user) => user.email === unverifiedEmail).emailVerified).toBe(false);
   });
 
   it('rejects file bodies that do not match an allowed upload MIME type', async () => {
