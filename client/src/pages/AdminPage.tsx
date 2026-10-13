@@ -110,6 +110,10 @@ export function AdminPage() {
           <span>{t("statusBlocked")}</span>
           <strong>{users.filter((user) => user.disabled).length}</strong>
         </div>
+        <div className="admin-stat">
+          <span>{t("adminUnverified")}</span>
+          <strong>{users.filter((user) => !user.emailVerified).length}</strong>
+        </div>
       </div>
 
       <div className="toolbar">
@@ -134,6 +138,7 @@ export function AdminPage() {
                 <th>{t("name")}</th>
                 <th>{t("adminRole")}</th>
                 <th>{t("adminStatus")}</th>
+                <th>{t("adminVerification")}</th>
                 <th>{t("adminItems")}</th>
                 <th>{t("adminJoined")}</th>
                 <th>{t("adminActions")}</th>
@@ -173,6 +178,15 @@ export function AdminPage() {
                         className={`admin-badge ${user.disabled ? "is-blocked" : "is-active"}`}
                       >
                         {user.disabled ? t("statusBlocked") : t("statusActive")}
+                      </span>
+                    </td>
+                    <td>
+                      <span
+                        className={`admin-badge ${user.emailVerified ? "is-active" : "is-unverified"}`}
+                      >
+                        {user.emailVerified
+                          ? t("statusVerified")
+                          : t("statusUnverified")}
                       </span>
                     </td>
                     <td>{user.itemCount}</td>

@@ -104,6 +104,11 @@
     background: var(--danger-wash);
 }
 
+.admin-badge.is-unverified {
+    color: var(--danger);
+    background: var(--danger-wash);
+}
+
 .admin-you {
     margin-inline-start: 0.4rem;
     color: var(--ink-3);

@@ -15,6 +15,7 @@ function presentAdminUser(user, itemCount) {
     email: user.email,
     role: user.role || 'user',
     disabled: Boolean(user.disabled),
+    emailVerified: user.emailVerified !== false,
     itemCount: itemCount || 0,
     createdAt: user.createdAt,
   };
