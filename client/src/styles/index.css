@@ -55,35 +55,35 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --paper: #15130f;
-  --paper-2: #0f0d0a;
-  --card: #201d17;
-  --ink: #f1e8d5;
-  --ink-2: #d2c8b0;
-  --ink-3: #a1977f;
-  --stroke: #b9ae96;
-  --edge: #3a3226;
-  --rule: rgba(241, 232, 213, 0.15);
-  --accent: #ff6a47;
-  --accent-ink: #1c0d07;
-  --accent-wash: rgba(255, 106, 71, 0.16);
-  --hl: rgba(244, 197, 66, 0.3);
-  --hover: rgba(241, 232, 213, 0.06);
-  --select: rgba(244, 197, 66, 0.2);
-  --spine: #0b0a08;
-  --pw-bg: #f1e8d5;
-  --pw-fg: #15130f;
-  --danger: #ff8f7e;
-  --danger-ink: #2a0e09;
-  --danger-wash: rgba(255, 143, 126, 0.14);
-  --ok: #8fd6a8;
-  --ok-wash: rgba(143, 214, 168, 0.12);
-  --pop: #3a3226;
+  --paper: #0f141c;
+  --paper-2: #0a0e14;
+  --card: #172030;
+  --ink: #eaf0f8;
+  --ink-2: #c0cada;
+  --ink-3: #8c9ab0;
+  --stroke: #7d8fb0;
+  --edge: #2a3750;
+  --rule: rgba(234, 240, 248, 0.14);
+  --accent: #f4c542;
+  --accent-ink: #1a1403;
+  --accent-wash: rgba(244, 197, 66, 0.14);
+  --hl: rgba(244, 197, 66, 0.28);
+  --hover: rgba(234, 240, 248, 0.06);
+  --select: rgba(244, 197, 66, 0.18);
+  --spine: #080b11;
+  --pw-bg: #eaf0f8;
+  --pw-fg: #0f141c;
+  --danger: #ff8c82;
+  --danger-ink: #2a0d0a;
+  --danger-wash: rgba(255, 140, 130, 0.14);
+  --ok: #7fdcae;
+  --ok-wash: rgba(127, 220, 174, 0.12);
+  --pop: #2a3750;
   --cast: #000000;
-  --scrim: rgba(0, 0, 0, 0.72);
+  --scrim: rgba(3, 6, 12, 0.75);
 
-  --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23f1e8d5' stroke-width='3' stroke-linecap='square'%3E%3Cpath d='m5 9 7 7 7-7'/%3E%3C/svg%3E");
-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .95 0 0 0 0 .9 0 0 0 0 .8 0 0 0 .2 -.05'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23eaf0f8' stroke-width='3' stroke-linecap='square'%3E%3Cpath d='m5 9 7 7 7-7'/%3E%3C/svg%3E");
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .85 0 0 0 0 .9 0 0 0 0 1 0 0 0 .2 -.05'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* בעברית אין רווחי אותיות ואין שורות צפופות מדי */
@@ -91,6 +91,18 @@
   --track: 0em;
   --tight: 0em;
   --lh-display: 1.08;
+}
+
+/* הסתרת פסי הגלילה (הגלילה עצמה ממשיכה לעבוד) */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 *,
@@ -1095,6 +1107,98 @@ label {
 .type-filter option:checked {
   background-color: var(--select);
   font-weight: 700;
+}
+
+/* תפריט נפתח מעוצב (סינון לפי סוג) */
+.dropdown {
+  position: relative;
+}
+
+.dropdown-trigger {
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  align-self: stretch;
+  padding: 0;
+  border: 0;
+  color: var(--ink);
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  text-align: start;
+}
+
+.dropdown-trigger:focus-visible {
+  outline: none;
+}
+
+.dropdown-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown-chevron {
+  flex: none;
+  color: var(--ink-3);
+  transition: transform 0.15s ease;
+}
+
+.dropdown.is-open {
+  box-shadow: 4px 4px 0 var(--accent);
+}
+
+.dropdown.is-open .dropdown-chevron {
+  transform: rotate(180deg);
+}
+
+.dropdown-menu {
+  position: absolute;
+  inset-inline: -2px;
+  top: calc(100% + 0.5rem);
+  z-index: 40;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  border: 2px solid var(--stroke);
+  border-radius: var(--r);
+  background: var(--card);
+  box-shadow: 6px 6px 0 var(--cast);
+  max-height: 18rem;
+  overflow-y: auto;
+}
+
+.dropdown-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: calc(var(--r) - 1px);
+  color: var(--ink-2);
+  font-size: 0.95rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.dropdown-option.is-active {
+  color: var(--ink);
+  background: var(--hover);
+}
+
+.dropdown-option.is-selected {
+  color: var(--ink);
+  background: var(--select);
+  font-weight: 700;
+}
+
+.dropdown-option.is-selected svg {
+  flex: none;
+  color: var(--accent);
 }
 
 .sort-indicator {
