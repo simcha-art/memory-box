@@ -43,5 +43,10 @@ export function fileNameAllowed(type: ItemType, fileName: string): boolean {
 }
 
 export function fileAllowed(type: ItemType, file: File): boolean {
-  return fileNameAllowed(type, file.name);
+  if (!file || file.size > MAX_FILE_BYTES) return false;
+  if (!fileNameAllowed(type, file.name)) return false;
+  const acceptedMimes = new Set(
+    allowedByType[type].flatMap((key) => formats[key].mimes),
+  );
+  return !file.type || acceptedMimes.has(file.type.toLowerCase());
 }

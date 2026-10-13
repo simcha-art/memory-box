@@ -235,6 +235,19 @@ describe('MemoryBox API', () => {
     expect(response.body.items[3].category).toBe('needle');
   });
 
+  it('searches for items with every comma-separated tag, ignoring case and spaces', async () => {
+    const account = await register('Tag Search', `tag-search-${Date.now()}@example.com`);
+    const matchingItem = await addItem(account.token, {
+      title: 'Travel papers', tags: ['Warrenty', 'Computer'],
+    });
+    await addItem(account.token, { title: 'Warranty only', tags: ['Warrenty'] });
+    await addItem(account.token, { title: 'Computer only', tags: ['Computer'] });
+
+    const response = await asUser(account.token)
+      .get('/api/items/search?q=%20warrenty%20%2C%20computer%20').expect(200);
+    expect(response.body.items.map((item) => item._id)).toEqual([matchingItem._id]);
+  });
+
   it('returns related items and upcoming reminders only within the owner account', async () => {
     const owner = await register('Owner', `related-${Date.now()}@example.com`);
     const other = await register('Other', `other-${Date.now()}@example.com`);

@@ -64,7 +64,7 @@ export function ItemEditor({
   const [categoryChoice, setCategoryChoice] = useState(item?.category || "");
   const [newCategory, setNewCategory] = useState("");
   const [tagFields, setTagFields] = useState<string[]>(
-    item?.tags.length ? item.tags : [""],
+    Array.isArray(item?.tags) && item.tags.length ? item.tags : [""],
   );
   const lastTagEmpty = !tagFields[tagFields.length - 1]?.trim();
   const kind = inputKindFor(type);

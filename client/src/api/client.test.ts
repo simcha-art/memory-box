@@ -33,6 +33,18 @@ describe('API client', () => {
     expect(new Headers(init.headers).get('Content-Type')).toBe('application/json');
   });
 
+  it('uses the local API URL by default for login requests', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(response(200, { token: 'token' }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await request('/auth/login', {
+      method: 'POST',
+      body: jsonBody({ email: 'ada@example.com', password: 'secret' }),
+    });
+
+    expect(fetchMock.mock.calls[0][0]).toBe('http://localhost:3000/api/auth/login');
+  });
+
   it('does not override content type for multipart requests and handles empty responses', async () => {
     const fetchMock = vi.fn().mockResolvedValue(response(204));
     vi.stubGlobal('fetch', fetchMock);
