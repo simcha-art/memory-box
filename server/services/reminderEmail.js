@@ -209,8 +209,8 @@ export function startReminderScheduler({
         transporter ||
         nodemailer.createTransport({
             host: "smtp.gmail.com",
-            port: 2525,
-            secure: false,
+            port: 465,
+            secure: true,
             auth: { user: env.EMAIL_USER, pass: env.EMAIL_PASS },
         });
     mailTransporter.verify((error, success) => {
